@@ -1,9 +1,14 @@
 """
 Raw per-frame model output cache (JSONL) and reprocessing into TrackedBoxes.
 
-Each line of a raw file holds one frame's detections. ``tracks_from_raw`` rebuilds
-TrackedBoxes from a raw file without re-running the model — the "reprocess without
-re-inference" path.
+The cache is **JSONL** (one JSON object per line), not a single JSON document, so frames
+can be appended one line at a time during inference, read back by streaming, and survive
+an interrupted run: complete lines stay valid and a partial final line is skipped. A
+regular JSON array truncated mid-write would be unparseable. (The small ClipMetadata
+sidecar stays regular JSON — written once, atomic; tracks are CSV.)
+
+Each line holds one frame's detections. ``tracks_from_raw`` rebuilds TrackedBoxes from a
+raw file without re-running the model — the "reprocess without re-inference" path.
 """
 
 from __future__ import annotations
