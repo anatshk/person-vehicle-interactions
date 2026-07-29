@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Lean install: only the lint/test tools (pinned to match requirements-dev.txt).
+      # The heavy ultralytics/torch runtime isn't needed for the current pure-Python
+      # tests; extend this when detection tests (integration-marked) are added.
+      - name: Install lint/test tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black==26.5.1 isort==8.0.1 pytest==9.1.1
+      - name: isort (check)
+        run: isort --check-only --diff person_vehicle_interactions tests
+      - name: black (check)
+        run: black --check --diff person_vehicle_interactions tests
+      - name: pytest
+        run: pytest -q
