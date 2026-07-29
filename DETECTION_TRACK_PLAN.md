@@ -1,87 +1,99 @@
 # Detection & Tracking Plan (P1 remainder)
 
-Plans the **detect → track → cache** glue that sits on top of the existing
-`tracked_data_model.py` (`TrackedBox` / `ClipMetadata` + CSV/JSON cache). Function-level
-design + planned tests. TDD: pure logic first (unit), glue via integration tests.
+Plans the **detect → track → cache** glue on top of `detection_processing.py` (merged)
+and `tracked_data_model.py`. **Session goal:** an overnight batch script that populates the
+cache for all clips, **resumable via checkpoints**. TDD: pure logic unit-tested, glue via
+integration tests.
 
 ## Design principle: split pure logic from heavy glue
 
-- **Pure modules** — stdlib + our dataclasses only, **no** `cv2` / `ultralytics` imports
-  → unit-tested, run in lean CI.
-- **Glue module** — imports `cv2` + `ultralytics` → integration-tested; those tests use
-  `pytest.importorskip("cv2" / "ultralytics")` so lean CI **skips** them instead of
-  failing on the missing heavy deps.
+- **Pure modules** — stdlib + our dataclasses only, **no** `cv2` / `ultralytics` → unit-tested
+  in lean CI.
+- **Glue module** — imports `cv2` + `ultralytics` → integration-tested; tests use
+  `pytest.importorskip(...)` so lean CI **skips** them.
 
-This keeps the pure conversion/filter logic (the interesting part) fully unit-tested and
-CI-green, while the model/video plumbing is exercised by integration tests run locally.
+## Checkpointing & cache layout (session goal)
+
+Two-level cache so an interrupted overnight run never redoes expensive work:
+
+```
+cache/
+  raw/<clip_id>.jsonl         # per-frame MODEL output (xyxy/cls/id/conf), appended per frame
+  tracks/<clip_id>.csv        # processed TrackedBoxes
+  tracks/<clip_id>.meta.json  # ClipMetadata
+```
+
+- **Save point 1 — raw model output** (`raw/<clip_id>.jsonl`): appended **per frame** during
+  inference, finalized on completion (temp → rename). The expensive artifact.
+- **Save point 2 — processed tracks** (`tracks/`): derived from raw, written last (atomic).
+- **Resume logic** (batch script): tracks exist → **skip**; raw exists but tracks missing →
+  **re-derive tracks from raw, no re-inference**; neither → full run.
+- **Limitation:** `model.track()` is stateful across frames, so a clip killed *mid-inference*
+  re-runs (no mid-stream resume). Clips are short, so the clip is the atomic unit.
 
 ## Modules & functions
 
-### `config.py` — constants/defaults
-`MODEL_NAME = "yolo11l.pt"`, `IMAGE_SIZE = 1280`, `CONFIDENCE_THRESHOLD = 0.25`,
-`IOU_THRESHOLD = 0.7`, `TRACKER_NAME = "botsort.yaml"`, `TARGET_CLASS_IDS = (0, 2)`,
-`SEED = 0`, `CACHE_DIR = Path("cache")`.
+### `config.py` — DetectionConfig + paths
+`DetectionConfig` frozen dataclass (`model_name="yolo11l.pt"`, `image_size=1280`,
+`confidence_threshold=0.25`, `iou_threshold=0.7`, `tracker_name="botsort.yaml"`,
+`target_class_ids=(0, 2)`, `seed=0`); `CACHE_DIR`, `RAW_DIR`, `TRACKS_DIR`.
 
-### `detection_processing.py` — PURE (unit-tested, lean CI)
-- `COCO_ID_TO_NAME: dict[int, str] = {0: "person", 2: "car"}`
-- `build_tracked_boxes(frame_index, fps, boxes_xyxy, class_ids, track_ids, confidences) -> list[TrackedBox]`
-  Convert one frame's raw tracker arrays into `TrackedBox`es: map class id → name,
-  compute `time_seconds` via `frame_to_seconds`, **skip detections without a track_id**.
-- `filter_detections_by_class(boxes, allowed_classes: set[str]) -> list[TrackedBox]`
-  Keep only boxes whose `object_class` is allowed (order-preserving).  ["filter by label"]
+### `detection_processing.py` — PURE ✅ (merged)
+`build_tracked_boxes`, `filter_detections_by_class`, `COCO_ID_TO_NAME`.
 
-### `tracker_engine.py` — GLUE (imports `cv2` + `ultralytics`)
-- `read_video_properties(video_path) -> VideoProperties`  ["loading a clip"]
-  fps, width, height, frame_count via `cv2.VideoCapture`. `VideoProperties` = small dataclass.
-- `track_clip(video_path, fps, config) -> list[TrackedBox]`  ["using the model"]
-  Run `model.track(source=..., stream=True, persist=True, classes=TARGET_CLASS_IDS,
-  imgsz=..., conf=..., iou=..., tracker=..., verbose=False)`; per-frame Result → extract
-  arrays → `build_tracked_boxes` → accumulate; apply `filter_detections_by_class` as a
-  safeguard.
-- `cache_clip_tracks(video_path, clip_id, config, cache_dir) -> tuple[Path, Path]`  ["save to cache"]
-  Orchestrate: `read_video_properties` → `track_clip` → assemble `ClipMetadata` →
-  `save_tracks` + `save_metadata`; return the (csv_path, meta_path).
+### `clip_assembly.py` — NEW, PURE (unit-tested)
+- `VideoProperties` dataclass (`fps, frame_width, frame_height, frame_count`).
+- `build_clip_metadata(clip_id, video_properties, config) -> ClipMetadata`.
 
-### `scripts/run_tracking.py` — CLI
-Run `cache_clip_tracks` for one clip or every file in `Videos/`; write to `cache/`
-(gitignored).
+### `raw_detections.py` — NEW, PURE (unit-tested)
+- `write_raw_frame(file, frame_index, boxes_xyxy, class_ids, track_ids, confidences)` —
+  append one JSONL line.
+- `read_raw(raw_path)` — iterate frame records.
+- `tracks_from_raw(raw_path, fps, config) -> list[TrackedBox]` — read JSONL →
+  `build_tracked_boxes` per frame → `filter_detections_by_class`. The "reprocess without
+  re-inference" path.
+
+### `tracker_engine.py` — NEW, GLUE (`cv2` + `ultralytics`)
+- `set_seeds(seed)` — torch / numpy / random.
+- `read_video_properties(video_path) -> VideoProperties` — via `cv2.VideoCapture`.
+- `run_inference(video_path, config, raw_path)` — fresh `YOLO(config.model_name)` **per call**;
+  `.track(stream=True, persist=True, classes=..., imgsz=..., conf=..., iou=..., tracker=...,
+  verbose=False)`; per frame → extract arrays → `write_raw_frame` (append to
+  `raw_path.partial`, rename to final on completion).
+- `cache_clip_tracks(video_path, clip_id, config) -> tuple[Path, Path]` — **checkpoint
+  orchestration**: skip if tracks exist; else ensure raw (run_inference if missing) →
+  `tracks_from_raw` → `build_clip_metadata` → `save_tracks` / `save_metadata`.
+
+### `scripts/build_cache.py` — NEW (the overnight script)
+Iterate `Videos/`, call `cache_clip_tracks` per clip with checkpoint-skip, log progress
+(clip, frames, elapsed). `--force` to rebuild.
 
 ## Determinism
-
-Set torch / numpy / random seeds (`SEED`); pin `imgsz` / `conf` / `iou` / tracker; CPU
-inference. `yolo11l.pt` auto-downloads on first run (documented as an external asset).
+Seeds via `set_seeds`; pinned imgsz/conf/iou/tracker; CPU. `yolo11l.pt` auto-downloads
+(documented as an external asset).
 
 ## Planned tests
 
-### `tests/test_detection_processing.py` — unit (lean CI)
-1. `test_build_tracked_boxes_basic` — arrays → correct `TrackedBox` fields.
-2. `test_build_tracked_boxes_maps_class_ids` — 0 → person, 2 → car.
-3. `test_build_tracked_boxes_computes_time_from_fps` — `time_seconds == frame / fps`.
-4. `test_build_tracked_boxes_skips_missing_track_id` — `None` id dropped.
-5. `test_build_tracked_boxes_empty_input` — empty arrays → `[]`.
-6. `test_build_tracked_boxes_asserts_on_unknown_class_id` — id outside `{0, 2}` raises.
-7. `test_filter_detections_by_class_keeps_allowed`.
-8. `test_filter_detections_by_class_empty_allowed_returns_empty`.
-9. `test_filter_detections_by_class_preserves_order`.
+### Pure (lean CI)
+- `test_clip_assembly.py` — `build_clip_metadata` maps VideoProperties + config → `ClipMetadata`.
+- `test_raw_detections.py` — raw JSONL write→read round-trip; `tracks_from_raw` builds correct
+  `TrackedBox`es (skips id-less, filters classes).
 
-### `tests/test_tracker_engine.py` — integration (importorskip; skipped in lean CI)
-9. `test_read_video_properties` — write a tiny synthetic mp4 (`cv2.VideoWriter`, known
-   fps/size/N frames), assert properties read back correctly.
-10. `test_cache_clip_tracks_smoke` — run the pipeline on a tiny synthetic video (no real
-    objects → empty/near-empty tracks), assert CSV + meta files are written and reload.
-    Needs cv2 + ultralytics (+ weights) → local/manual.
+### Integration (`importorskip`, `@pytest.mark.integration`, skipped in lean CI)
+- `test_read_video_properties` — synthetic mp4 (generated once into `tests/videos/`,
+  gitignored, regenerated if missing) → correct props.
+- `test_cache_clip_tracks_smoke` — pipeline on the synthetic clip (empty tracks OK); assert
+  raw + tracks + meta written and reload; a re-run **skips** (checkpoint).
 
-## CI update
-
-- Register a `markers = ["integration: needs cv2/ultralytics/model weights"]` entry in
-  `pyproject.toml`.
-- Integration tests self-skip via `pytest.importorskip(...)`, so lean CI stays green
-  running only the pure unit tests.
+## CI / repo
+- Register `markers = ["integration: needs cv2/ultralytics/model weights"]` in `pyproject.toml`.
+- `.gitignore`: `cache/`, `tests/videos/`.
 
 ## Resolved decisions
-
-- `track_clip` returns a **`list`** (clips are short: ≤600 frames).
-- Detections with class ids outside `{0, 2}` → **assert/raise** in `build_tracked_boxes`
-  (defensive; the `classes` filter should already prevent it).
-- `VideoProperties` vs `ClipMetadata`: **separate `VideoProperties`** (video-intrinsic
-  fields only); `ClipMetadata` stays flat/unchanged; `cache_clip_tracks` maps the 4 fields.
+- Tracks/`track_clip` return a **list** (clips short).
+- Unknown class id → **raise** in `build_tracked_boxes`.
+- **Separate `VideoProperties`** in a **new pure module** (`clip_assembly.py`).
+- Model loaded **per call** (fresh `YOLO(...)`).
+- Integration video **synthetic**, created once into `tests/videos/` (gitignored).
+- Overlay **deferred** — the cache holds box + class + track_id, so overlays are recoverable.
+- **Two-level checkpoint cache** (raw model output + processed tracks) for resumable overnight runs.
