@@ -21,6 +21,38 @@ Entry template:
 
 ---
 
+## 2026-07-29 — Session 3: Pipeline plan (PLAN.md)
+
+**Asked:** Frame-refine the GT, then converge the pipeline design and draft a plan
+(reviewer leading).
+
+**Decisions:**
+- **Detector:** YOLO11-l (mature, well-supported). _Alternatives: YOLO26 (newest,
+  NMS-free, best small-object) and YOLOv8; YOLO11 chosen to de-risk._
+- **Detection res:** high `imgsz` to start; **SAHI tiling deferred** as an improvement
+  for the 4K aerial clip (doesn't compose with `model.track()`).
+- **Tracking:** `model.track()` with **BoT-SORT** (camera-motion compensation for PTZ).
+- **Overlap metric:** normalized intersection (intersection ÷ person area), not IoU.
+- **Distance metric:** center-distance normalized by car bbox size (scale/egomotion-
+  invariant); **pixel→meter calibration deferred** (noted as considered, not used).
+- **Tuning/eval:** leave-one-scene-out CV over 6 scene units; keep scene groups intact.
+- **Cache tracks** to disk so the tuning/graph loop never re-runs detection.
+- Enter/exit/other **type classification staged separately** from candidate detection.
+- **`show_interaction`** visualizer: consumes the output records to render annotated
+  interaction frames/clips (validation aid + optional deliverable).
+- **Descriptions YOLO-only**: base detector (class + id) + open-vocab YOLO-World/YOLOE for
+  attribute tags, all local. Noted tradeoff: an LLM API could replace the open-vocab model
+  (network + cost vs. extra local model + memory) — not taken for the submission.
+
+**Outcome:** [PLAN.md](PLAN.md) drafted (objective, locked decisions, scene units,
+staged pipeline, thresholds, output, determinism, TDD, deferrals, P0–P6 phasing).
+Committed GT earlier this session (`38ac9e8`).
+
+**Reflect / next:** On plan approval, start **P0** (env setup) then **P1** (detect +
+track + cache) under TDD.
+
+---
+
 ## 2026-07-29 — Session 2: Pipeline plan & ground-truth setup
 
 **Asked:** Discuss and agree the approach; set up a ground-truth annotation workflow
