@@ -16,9 +16,14 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 
 - Follow the **Google Python Style Guide** (https://google.github.io/styleguide/pyguide.html).
 - Format with **Black**, line length **88**.
-- Sort imports with **isort** using `profile = "google"` (keep compatible with Black).
+- Sort imports with **isort** using `profile = "google"` **plus `force_single_line = false`**
+  — group names from the same module into one parenthesized `from x import (a, b, ...)`
+  block (keep compatible with Black).
 - **Type hints are required** on all function/method signatures.
-- **Google-style docstrings** on modules and public functions/classes.
+- **Google-style docstrings** on modules and public functions/classes. **Multi-line
+  docstrings start with a line break** after the opening `"""` (summary on the next line,
+  not the first); single-line docstrings stay on one line. _(A deliberate deviation from
+  PEP 257 / Google's summary-on-first-line; not auto-enforced by Black/isort.)_
 - Use **meaningful, descriptive variable and function names** (per the Google style
   guide, but worth repeating) — avoid abbreviations and single-letter names except
   conventional short-lived loop indices.
