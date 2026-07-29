@@ -19,7 +19,21 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 - Sort imports with **isort** using `profile = "google"` (keep compatible with Black).
 - **Type hints are required** on all function/method signatures.
 - **Google-style docstrings** on modules and public functions/classes.
+- Use **meaningful, descriptive variable and function names** (per the Google style
+  guide, but worth repeating) — avoid abbreviations and single-letter names except
+  conventional short-lived loop indices.
 - Prefer clear, readable code over cleverness; this is a take-home, not production.
+
+## Making changes
+
+- **Minimal diffs:** make the smallest change that accomplishes the task. Don't refactor,
+  rename, or reformat code unrelated to the request.
+- **Confirm before multi-file edits:** if a change would touch several files (e.g. a
+  rename or signature change with multiple call sites), don't apply it automatically —
+  pause, surface the affected scope (like PyCharm's rename warning when the scope is
+  large), and proceed only on confirmation.
+- **Reuse before adding:** prefer reusing existing code; generalize an existing function
+  rather than adding a near-duplicate.
 
 ## Environment & dependencies
 
