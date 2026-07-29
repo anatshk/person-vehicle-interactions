@@ -76,12 +76,14 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 
 ## Work log
 
-- Maintain **`WORKLOG.md`** (reverse-chronological, newest first).
-- At the end of each working session or significant request, add/update an entry using
-  the template in that file: **Asked / Decisions (+ alternatives) / Outcome / Reflect-next**.
-- This log feeds the final write-up (assumptions and alternatives considered).
-- `WORKLOG.md` and `PLAN.md` updates are batched into a **periodic docs PR** (reviewed on
-  GitHub), not committed loosely to `main`.
+- Maintain **`WORKLOG.md`** (reverse-chronological, newest first) — **concise highlights**,
+  not blow-by-blow. Each entry: a short **narrative** of what was done (e.g. "module X +
+  tests", "added CI") and the **decisions** made. Skip mechanics that PRs/CI already capture.
+- **Alternatives:** include them only when they add real information — **ask before adding**,
+  don't include by default.
+- This log feeds the final write-up.
+- `WORKLOG.md` and `PLAN.md` updates are batched into a **periodic docs PR**, not committed
+  loosely to `main`.
 
 ## Commits & git
 

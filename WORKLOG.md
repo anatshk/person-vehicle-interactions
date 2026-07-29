@@ -1,23 +1,36 @@
 # Work-with-Claude Log
 
-A running, reverse-chronological log (newest first) of what was asked, decisions
-made (with alternatives considered), outcomes, and reflections. Feeds the final
-write-up. One entry per working session or significant request.
+A running, reverse-chronological log (newest first) of **concise highlights** — a short
+narrative of what was done and the decisions made. Feeds the final write-up. Alternatives
+are included only when they add real information (ask first).
 
 Entry template:
 
 ```
 ## YYYY-MM-DD — Session N: <short title>
 
-**Asked:** <what I was asked to do>
+**Narrative:** <highlights — e.g. "module X + tests", "added CI">
 
-**Decisions:**
-- <decision> — <rationale>. _Alternatives: <options considered>._
+**Decisions:** <key decisions>
 
-**Outcome:** <what changed / current state>
-
-**Reflect / next:** <observations, follow-ups>
+**Next:** <what's next>
 ```
+
+---
+
+## 2026-07-29 — Session 6: shared test factory + detection processing
+
+**Narrative:** Extracted the duplicated `TrackedBox` builder into a shared
+`tests/factories.py` (new tests package). Added the `detection_processing` module + tests
+(`build_tracked_boxes`, `filter_detections_by_class`). Cleared PR-review nits (grouped
+imports, docstring style) and a CI isort/black config clash. Landed via PRs #4/#5.
+
+**Decisions:** Pure/glue split so pure logic runs in lean CI without torch; isort
+`force_single_line=false` made Black-compatible (`multi_line_output=3`); multi-line
+docstrings start with a newline.
+
+**Next:** `tracker_engine` glue + an overnight, checkpointed cache-building batch script
+(see DETECTION_TRACK_PLAN.md).
 
 ---
 
