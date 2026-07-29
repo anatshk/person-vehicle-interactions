@@ -75,9 +75,12 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 - At the end of each working session or significant request, add/update an entry using
   the template in that file: **Asked / Decisions (+ alternatives) / Outcome / Reflect-next**.
 - This log feeds the final write-up (assumptions and alternatives considered).
+- `WORKLOG.md` and `PLAN.md` updates are batched into a **periodic docs PR** (reviewed on
+  GitHub), not committed loosely to `main`.
 
 ## Commits & git
 
+- Work lands via **reviewed PRs** merged on GitHub (feature branches off `main`).
 - Use **Conventional Commits** (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...).
 - Keep commits small and focused.
 - Keep messages concise: a good title, a short "Set up/..." sentence if useful, and

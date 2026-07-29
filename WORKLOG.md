@@ -21,6 +21,31 @@ Entry template:
 
 ---
 
+## 2026-07-29 — Session 5: P1 track data model, CI, PR workflow
+
+**Asked:** Implement P1 under TDD; add CI; move to a PR-based flow with a periodic docs PR.
+
+**Decisions / work:**
+- **P1 track data model** (`tracked_data_model.py`): `TrackedBox` + `ClipMetadata`
+  dataclasses, CSV track cache + JSON metadata sidecar, `frame_to_seconds`. Built TDD
+  (11 tests: round-trip, dtype restoration, deterministic ordering, validation). Green;
+  black / isort / mypy clean.
+- **Cache = CSV** (not parquet) via the stdlib `csv` module — inspectable, clean
+  native-type round-trips, one fewer dependency (dropped `pyarrow`).
+- **CI** (`.github/workflows/ci.yml`): isort / black / pytest on PRs + pushes to `main`;
+  lean install (pinned tools only) since current tests are pure-Python. CI bundled with
+  the P1 code so it runs on the PR that introduces the code it checks.
+- **PR-based workflow**: work lands via reviewed PRs merged on GitHub;
+  `WORKLOG.md` / `PLAN.md` updates are **batched into a periodic docs PR**.
+
+**Outcome:** two PRs opened — #1 (docs: rules, checklist, this worklog/plan update) and
+#2 (P1 code + CI). Local `main` clean.
+
+**Reflect / next:** after the PRs merge, wire `tracker_engine.py` (YOLO11-l + BoT-SORT,
+high `imgsz`) with a smoke test, then **P2** (pairwise overlap/distance signals + graphs).
+
+---
+
 ## 2026-07-29 — Session 4: P0 environment setup
 
 **Asked:** Start P0 — create the venv + requirements; reviewer runs the install in a
