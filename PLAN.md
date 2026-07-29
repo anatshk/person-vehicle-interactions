@@ -119,8 +119,9 @@ description, and a vehicle description. Pass-by is not an interaction.
 
 ## Suggested phasing
 
-- **P0** — env setup (`requirements.txt`, `pyproject.toml` for Black/isort/pytest).
-- **P1** — detect + track + cache tracks (+ optional overlay to sanity-check tracks).
+- **P0** ✅ — env setup (`requirements.txt`, `pyproject.toml` for Black/isort/pytest); CI added.
+- **P1** 🔨 — detect + track + cache tracks. Done: track/metadata **data model + CSV cache**
+  (TDD). Next: `tracker_engine.py` (YOLO11-l + BoT-SORT) + smoke test (+ optional overlay).
 - **P2** — pairwise overlap/distance signals + graphs.
 - **P3** — threshold candidate detection + LOSO tuning + merge rule.
 - **P4** — enter/exit/other type classification.
