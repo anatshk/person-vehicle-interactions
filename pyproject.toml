@@ -13,6 +13,7 @@ line_length = 88
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-ra"
+pythonpath = ["."]
 
 [tool.mypy]
 python_version = "3.12"
