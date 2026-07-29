@@ -1,0 +1,10 @@
+# Runtime dependencies (pip). Exact-pinned to the tested environment (Python 3.12, CPU).
+# ultralytics pulls in torch / torchvision (CPU build here), pillow, pyyaml, etc.
+# CPU-only torch: prepend `pip install torch torchvision --index-url
+# https://download.pytorch.org/whl/cpu` before installing these (see README).
+ultralytics==8.4.110
+opencv-python==5.0.0.93
+numpy==2.5.1
+pandas==3.0.5
+pyarrow==25.0.0
+matplotlib==3.11.1

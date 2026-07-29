@@ -21,6 +21,31 @@ Entry template:
 
 ---
 
+## 2026-07-29 — Session 4: P0 environment setup
+
+**Asked:** Start P0 — create the venv + requirements; reviewer runs the install in a
+separate terminal.
+
+**Decisions / setup:**
+- **Python 3.12.3**, venv + pip.
+- **CPU-only torch** (no CUDA): `torch==2.13.0+cpu` / `torchvision==0.28.0+cpu`. The
+  default CUDA wheel was installed first by mistake, then swapped for the CPU build.
+  Keeps the footprint small and matches the plan's **deterministic CPU inference**
+  assumption (no GPU non-determinism to manage).
+- Dependencies **exact-pinned** to the tested environment in `requirements.txt`
+  (runtime: ultralytics 8.4.110, opencv 5.0.0.93, numpy 2.5.1, pandas 3.0.5,
+  pyarrow 25.0.0, matplotlib 3.11.1) and `requirements-dev.txt` (black, isort, pytest,
+  mypy). No full lock file — avoids the `+cpu` local-version portability trap; torch
+  CPU-install noted for reviewers.
+- `pyproject.toml` holds tool config only (Black 88 / isort google / pytest / mypy).
+
+**Outcome:** environment installed and sanity-checked (imports OK, ultralytics 8.4.110).
+
+**Reflect / next:** P1 — detect → track → cache tracks, under TDD (core geometry/cache
+logic tested first; detection/tracking glue kept light).
+
+---
+
 ## 2026-07-29 — Session 3: Pipeline plan (PLAN.md)
 
 **Asked:** Frame-refine the GT, then converge the pipeline design and draft a plan
