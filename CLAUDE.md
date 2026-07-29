@@ -88,6 +88,9 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 ## Commits & git
 
 - Work lands via **reviewed PRs** merged on GitHub (feature branches off `main`).
+- **PR comment replies** are posted via `gh` under the authenticated (human) account, so
+  tag each reply with **`[Claude-<model>]`** (currently `[Claude-Opus-4.8]`) so it's
+  clearly Claude replying, not the reviewer replying to themselves.
 - Use **Conventional Commits** (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...).
 - Keep commits small and focused.
 - Keep messages concise: a good title, a short "Set up/..." sentence if useful, and
