@@ -1,4 +1,5 @@
-"""Data model for tracked detections and the per-clip track/metadata cache.
+"""
+Data model for tracked detections and the per-clip track/metadata cache.
 
 A ``TrackedBox`` is one detected+tracked object (person or car) in one frame. Tracks
 for a clip are cached as CSV (one row per box) alongside a small JSON metadata sidecar,
@@ -30,7 +31,8 @@ PathLike = Path | str
 
 @dataclasses.dataclass
 class TrackedBox:
-    """A single tracked detection (person or car) in a single frame.
+    """
+    A single tracked detection (person or car) in a single frame.
 
     Coordinates are pixel values of the axis-aligned box corners (top-left ``x1, y1``,
     bottom-right ``x2, y2``).
@@ -78,7 +80,8 @@ def frame_to_seconds(frame: int, fps: float) -> float:
 
 
 def save_tracks(boxes: list[TrackedBox], csv_path: PathLike) -> None:
-    """Write tracked boxes to CSV, sorted by (frame, track_id) for determinism.
+    """
+    Write tracked boxes to CSV, sorted by (frame, track_id) for determinism.
 
     The header row is always written, even when ``boxes`` is empty.
     """
@@ -103,7 +106,8 @@ def save_tracks(boxes: list[TrackedBox], csv_path: PathLike) -> None:
 
 
 def load_tracks(csv_path: PathLike) -> list[TrackedBox]:
-    """Read tracked boxes back from a CSV cache, restoring native Python types.
+    """
+    Read tracked boxes back from a CSV cache, restoring native Python types.
 
     Raises ``FileNotFoundError`` if the cache file does not exist.
     """
