@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import pytest
 
-from person_vehicle_interactions.tracked_data_model import ClipMetadata
-from person_vehicle_interactions.tracked_data_model import frame_to_seconds
-from person_vehicle_interactions.tracked_data_model import load_metadata
-from person_vehicle_interactions.tracked_data_model import load_tracks
-from person_vehicle_interactions.tracked_data_model import save_metadata
-from person_vehicle_interactions.tracked_data_model import save_tracks
-from person_vehicle_interactions.tracked_data_model import TRACK_CSV_COLUMNS
-from person_vehicle_interactions.tracked_data_model import TrackedBox
+from person_vehicle_interactions.tracked_data_model import (
+    ClipMetadata,
+    frame_to_seconds,
+    load_metadata,
+    load_tracks,
+    save_metadata,
+    save_tracks,
+    TRACK_CSV_COLUMNS,
+    TrackedBox,
+)
 
 
 def make_tracked_box(

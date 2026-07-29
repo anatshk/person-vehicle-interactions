@@ -8,6 +8,9 @@ target-version = ["py312"]
 [tool.isort]
 profile = "google"
 line_length = 88
+# Override the google profile's one-import-per-line: group names from the same module
+# into a single parenthesized `from x import (a, b, ...)` block.
+force_single_line = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
