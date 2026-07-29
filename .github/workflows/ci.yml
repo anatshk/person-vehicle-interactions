@@ -21,8 +21,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install black==26.5.1 isort==8.0.1 pytest==9.1.1
       - name: isort (check)
-        run: isort --check-only --diff person_vehicle_interactions tests
+        run: isort --check-only --diff person_vehicle_interactions scripts tests
       - name: black (check)
-        run: black --check --diff person_vehicle_interactions tests
+        run: black --check --diff person_vehicle_interactions scripts tests
       - name: pytest
         run: pytest -q

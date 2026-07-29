@@ -1,6 +1,13 @@
 # Input video data (provided separately, not committed)
 Videos/
 
+# Generated track cache and synthetic test video
+cache/
+tests/videos/
+
+# Auto-downloaded model weights (external asset)
+*.pt
+
 # Python
 __pycache__/
 *.py[cod]
