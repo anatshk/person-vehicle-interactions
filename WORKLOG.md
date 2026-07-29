@@ -21,6 +21,65 @@ Entry template:
 
 ---
 
+## 2026-07-29 — Session 2: Pipeline plan & ground-truth setup
+
+**Asked:** Discuss and agree the approach; set up a ground-truth annotation workflow
+driven by watching each clip.
+
+**Decisions:**
+- Approach: classic **detect → track → reason** pipeline (deterministic/reproducible)
+  over a VLM/captioning approach.
+- Model stack: **Ultralytics YOLO + ByteTrack**.
+- Output: **JSON**, per-clip files + a combined `results.json`.
+- Preprocessing: **downscale large frames** for detection; compute times from each
+  clip's **real fps**.
+- Descriptions richness: **tabled** until after clip review.
+- Establish **ground truth first**, via an interactive dialogue: Claude names a clip,
+  the reviewer watches it externally and reports summary + interaction times, Claude
+  records it. Thumbnails deferred (extract specific frames on request).
+
+**Refined definitions (during review):**
+- Interaction time span = **vehicle-contact window only** (starts when person/vehicle
+  boxes overlap, ends when person is invisible inside or boxes separate).
+- **Interaction = discrete event** (enter/exit/other contact), **not** the state of
+  riding/occupying — continuous riding/driving with no visible mount/dismount is a
+  pass-by.
+- **Vehicle scope** = COCO `car` class **only** for this assignment (every interaction
+  is with a car); kept configurable but defaults to `car`.
+- Clips from the same scene noted for train/val grouping: `mKzCQKTHizw_0`/`_1` (same
+  scene, different angle) and `NmlzoaDcOuI_1`/`_6` (same camera, different car).
+
+**Outcome:** All 8 clips annotated in
+[ground_truth/ground_truth.md](ground_truth/ground_truth.md) (human-readable) and
+[ground_truth/interactions.csv](ground_truth/interactions.csv) (eval mirror), then
+**frame-refined** via labeled ffmpeg contact sheets (reviewer picked exact start/end
+frames per interaction; script in scratchpad `frame_sheet.sh`). Applying the
+contact-window + same-person/same-vehicle **merge rules** gives **13 interactions total**
+(6 enter, 6 exit, 1 other) — merges collapsed clip 3 (exit+other) and clip 4
+(exit+trunk+rear-door) into single windows. Data spans fixed CCTV, aerial/drone,
+PTZ/moving cameras; night/day; 4K to 352×288; jump-cuts, occlusions, truncated events,
+overlapping/concurrent interactions, a driver swap, and pass-by hard negatives.
+
+**Reflect / next:** Finalize the description approach (tabled), then begin TDD on the
+interaction-reasoning logic against this GT. Key challenges to design for: camera
+egomotion (PTZ clips), low fps (6 fps clips), heavy occlusion / partial-frame vehicles,
+concurrent/overlapping interactions on the same vehicle, and **small-object detection on
+the 4K aerial clip** (`gt1125_06`) — prefer tiled/sliced inference (SAHI-style) or
+high-res detection there rather than the default downscale (preprocessing should be
+adaptive per clip).
+
+**Tunable interaction thresholds to define in PLAN.md (parked for the plan discussion):**
+- min person↔car box **overlap** (IoU or % of person box inside car box) to count as contact;
+- max person↔car box **proximity/distance** (normalized by frame size) when boxes don't overlap;
+- min interaction **duration** (frames / seconds) to filter momentary/spurious contacts
+  (clip `NmlzoaDcOuI_1` has people passing in front of the car — box overlap without
+  interaction — as hard negatives for this tuning);
+- **merge rule**: collapse same-person + same-vehicle engagements whose boxes stay close
+  into one interaction (can't separate them yet). Possible future aid: a "vehicle
+  open/closed" door-state classifier to split them back apart.
+
+---
+
 ## 2026-07-29 — Session 1: Project setup & ground rules
 
 **Asked:** Initialize a git repo, ignore the `Videos/` folder, and define code-style

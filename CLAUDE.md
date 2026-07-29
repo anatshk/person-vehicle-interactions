@@ -66,4 +66,6 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 
 - Use **Conventional Commits** (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...).
 - Keep commits small and focused.
+- Keep messages concise: a good title, a short "Set up/..." sentence if useful, and
+  **terse bullet points** — name the file/change, don't explain it, no "Add" prefix.
 - **Commit only when explicitly asked.** Never commit automatically.
