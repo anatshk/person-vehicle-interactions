@@ -18,6 +18,22 @@ Entry template:
 
 ---
 
+## 2026-07-29 — Session 7: pure cache modules
+
+**Narrative:** Added the pure half of the tracker/cache work — `config.DetectionConfig`,
+`clip_assembly` (`VideoProperties` + `build_clip_metadata`), and `raw_detections` (raw
+per-frame cache + `tracks_from_raw`). Unit-tested; PR #7.
+
+**Decisions:** Raw per-frame model output is stored as **JSONL** (one JSON object per
+line), so frames append one at a time, stream-read, and survive an interrupted run
+(complete lines stay valid; a partial last line is skipped — a truncated JSON array
+wouldn't parse at all). Regular **JSON** is kept for the small `ClipMetadata` sidecar
+(written once, atomic); tracks are CSV.
+
+**Next:** the glue — `tracker_engine` + overnight `build_cache.py`.
+
+---
+
 ## 2026-07-29 — Session 6: shared test factory + detection processing
 
 **Narrative:** Extracted the duplicated `TrackedBox` builder into a shared
