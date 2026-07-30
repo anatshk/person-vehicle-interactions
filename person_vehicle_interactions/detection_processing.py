@@ -13,9 +13,15 @@ def _load_coco_id_to_name() -> dict[int, str]:
     """
     Load the COCO id->name map from the packaged JSON reference.
 
-    The JSON is generated from the detector's own ``model.names`` (see the repo's data
-    file), so the mapping matches exactly what YOLO emits — kept out of the code as a
-    data file rather than an 80-entry literal.
+    Source: the ``yolo11l.pt`` weights' own class names, so the mapping matches exactly
+    what the detector emits. ``data/coco_classes.json`` was generated once with::
+
+        from ultralytics import YOLO
+
+        names = YOLO("yolo11l.pt").names  # {0: 'person', 1: 'bicycle', ..., 79: ...}
+
+    It is kept as a data file (not an 80-entry literal) and read here with the stdlib
+    only, so this pure module stays free of the heavy ``ultralytics`` dependency.
     """
     resource = resources.files("person_vehicle_interactions").joinpath(
         "data", "coco_classes.json"
@@ -24,7 +30,13 @@ def _load_coco_id_to_name() -> dict[int, str]:
     return {int(class_id): name for class_id, name in raw_map.items()}
 
 
-# Full COCO-80 class id -> name map (loaded from data/coco_classes.json).
+# Full COCO-80 id -> name map (from data/coco_classes.json; see _load_coco_id_to_name).
+# Class ids this project uses (grouped in config.py):
+#   0  person  — the person in each interaction
+#   2  car  /  5  bus  /  7  truck  — the base "vehicle" classes
+#   8  boat  — SPECIAL: not a real target. Cars in the low-res night clip
+#              (HIu4lM4B8hA_1) misdetect as boat, so boat is added as a per-clip
+#              vehicle override (see config.CLIP_VEHICLE_CLASS_OVERRIDES).
 COCO_ID_TO_NAME: dict[int, str] = _load_coco_id_to_name()
 
 
