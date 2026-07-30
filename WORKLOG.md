@@ -18,6 +18,38 @@ Entry template:
 
 ---
 
+## 2026-07-30 — Session 9: class-filter config + per-clip vehicle classes
+
+**Narrative:** Made the detection class filter configurable and separated a "vehicle"
+definition from it. `config.target_class_ids` is now optional (`None` = unfiltered), the
+COCO id→name map is the full COCO-80 loaded from `data/coco_classes.json` (generated from
+`YOLO('yolo11l.pt').names`), and vehicles are `VEHICLE_CLASS_IDS = (car, bus, truck)` with
+per-clip overrides. Visualization sheets now pick each track's **highest-confidence** frame
+and `show_track` labels tiles `f<frame>/<total>`.
+
+**The `HIu4lM4B8hA_1` issue (why per-clip overrides exist):** its `show_objects` sheet had
+**0 vehicles** under a car-scoped filter — only 2 persons. Re-running detection **unfiltered**
+showed the cars *are* detected, but YOLO labels them **`boat`** in that low-res grayscale
+night scene:
+
+- Before — unfiltered detection (cars appear, but as `boat`):
+  ![HIu all classes](images/HIu4lM4B8hA_1_all_classes.png)
+- After — per-clip override adds `boat` to the vehicle set, so the cars are kept:
+  ![HIu with boat](images/HIu4lM4B8hA_1_vehicles_with_boat.png)
+
+**Solution:** `CLIP_VEHICLE_CLASS_OVERRIDES["HIu4lM4B8hA_1"] = (8,)` (boat), applied per
+clip by `build_cache`; a `--force` rebuild recovered the cars (5 boat "vehicle" tracks).
+**TODO:** drive this from clip properties (resolution / lighting) rather than a hardcoded
+map — expand the vehicle definition automatically when video quality is low.
+
+**Decisions:** boat stays a **per-clip** override (not a global vehicle class) to avoid
+polluting other clips; COCO map kept as an external data file (stdlib load, no ultralytics
+in the pure module); object sheets select by confidence, not box size.
+
+**Next:** ID-switch / track-merge investigation; then P2 signals + threshold-tuning graphs.
+
+---
+
 ## 2026-07-30 — Session 8: overnight cache results + visualization tools
 
 **Results of overnight run:** PR #9 merged; `scripts/build_cache.py` ran over all 8 clips

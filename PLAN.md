@@ -12,9 +12,15 @@ description, and a vehicle description. Pass-by is not an interaction.
 
 ## Locked decisions
 
-- **Detector:** Ultralytics **YOLO11-l**, COCO-pretrained, no training. Detect **person
-  (0)** and **car (2)** only, filtered at inference (`classes=[0, 2]`).
-- **Vehicle scope:** `car` only (see GT scope decision).
+- **Detector:** Ultralytics **YOLO11-l**, COCO-pretrained, no training. The detection
+  keep-set is **configurable per clip** (`config.target_class_ids_for_clip`): **person (0)
+  + the vehicle classes**, filtered at inference; `None` means unfiltered.
+- **Vehicle scope:** the "vehicle" classes are **car (2), bus (5), truck (7)**
+  (`config.VEHICLE_CLASS_IDS`), expandable **per clip** via `CLIP_VEHICLE_CLASS_OVERRIDES` —
+  e.g. `HIu4lM4B8hA_1` (low-res night) adds **boat (8)** because its cars misdetect as boat.
+  GT interactions are all with cars, but the keep-set is broadened so a mislabeled vehicle
+  isn't dropped. **TODO:** drive the expansion from clip properties (resolution / lighting)
+  instead of a hardcoded per-clip map. See WORKLOG (session 9) for the finding.
 - **Detection resolution:** start with **high `imgsz`** (e.g. 1280) to recover cut-off /
   distant people. Adaptive per clip.
 - **Tracking:** Ultralytics `model.track()` with **BoT-SORT** (default; has camera-motion
