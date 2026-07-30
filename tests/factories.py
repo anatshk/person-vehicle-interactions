@@ -1,8 +1,15 @@
-"""Shared factories for building test objects."""
+"""Shared factories and constants for building test objects."""
 
 from __future__ import annotations
 
+from person_vehicle_interactions.interaction_signals import PairFrameSignal
 from person_vehicle_interactions.tracked_data_model import frame_to_seconds, TrackedBox
+
+# Every class the tests treat as a vehicle: the global vehicle classes plus ``boat``
+# (the per-clip override for the low-res night clip). The production code defines vehicle
+# scope by COCO id and per clip (``config.vehicle_class_names_for_clip``), so this flat
+# name-set is a test-only convenience and lives here rather than in the code.
+VEHICLE_CLASSES: set[str] = {"car", "bus", "truck", "boat"}
 
 
 def make_tracked_box(
@@ -27,4 +34,68 @@ def make_tracked_box(
         x2=x2,
         y2=y2,
         confidence=confidence,
+    )
+
+
+def make_person(
+    frame: int,
+    track_id: int,
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    confidence: float = 0.9,
+) -> TrackedBox:
+    """Build a person-class TrackedBox."""
+    return make_tracked_box(
+        frame=frame,
+        track_id=track_id,
+        object_class="person",
+        x1=x1,
+        y1=y1,
+        x2=x2,
+        y2=y2,
+        confidence=confidence,
+    )
+
+
+def make_vehicle(
+    frame: int,
+    track_id: int,
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    confidence: float = 0.8,
+    object_class: str = "car",
+) -> TrackedBox:
+    """Build a vehicle-class TrackedBox (``car`` by default)."""
+    return make_tracked_box(
+        frame=frame,
+        track_id=track_id,
+        object_class=object_class,
+        x1=x1,
+        y1=y1,
+        x2=x2,
+        y2=y2,
+        confidence=confidence,
+    )
+
+
+def make_pair_signal(
+    frame: int,
+    overlap: float,
+    distance: float,
+    person_confidence: float = 0.9,
+    vehicle_confidence: float = 0.8,
+    fps: float = 30.0,
+) -> PairFrameSignal:
+    """Build a PairFrameSignal for one frame (time derived from ``fps``)."""
+    return PairFrameSignal(
+        frame=frame,
+        time_seconds=frame_to_seconds(frame, fps),
+        overlap=overlap,
+        distance=distance,
+        person_confidence=person_confidence,
+        vehicle_confidence=vehicle_confidence,
     )

@@ -12,35 +12,9 @@ from person_vehicle_interactions.interaction_signals import (
     person_track_ids,
     vehicle_track_ids,
 )
-from tests.factories import make_tracked_box
-
-VEHICLE_CLASSES = {"car", "bus", "truck", "boat"}
-
-
-def _person(frame, track_id, x1, y1, x2, y2, confidence=0.9):
-    return make_tracked_box(
-        frame=frame,
-        track_id=track_id,
-        object_class="person",
-        x1=x1,
-        y1=y1,
-        x2=x2,
-        y2=y2,
-        confidence=confidence,
-    )
-
-
-def _vehicle(frame, track_id, x1, y1, x2, y2, confidence=0.8, object_class="car"):
-    return make_tracked_box(
-        frame=frame,
-        track_id=track_id,
-        object_class=object_class,
-        x1=x1,
-        y1=y1,
-        x2=x2,
-        y2=y2,
-        confidence=confidence,
-    )
+from tests.factories import make_person as _person
+from tests.factories import make_vehicle as _vehicle
+from tests.factories import VEHICLE_CLASSES
 
 
 def test_normalized_intersection_person_fully_inside_is_one():
