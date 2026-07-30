@@ -127,6 +127,11 @@ description, and a vehicle description. Pass-by is not an interaction.
   need. Could approximate px/m from a known car length where a clean reference exists.
 - **LLM-API description backend** — alternative to the local open-vocab model (see the
   Descriptions tradeoff); not taken for the submission.
+- **Alternative / higher-recall detectors** — try other models in place of `yolo11l`
+  (e.g. `yolo11x`, YOLO26, RT-DETR) to see whether **detection-recall misses** are
+  recovered — specifically the `iMGR_0AG3a8_2_3` woman exiting the black car, whom `yolo11l`
+  never detects (confirmed detection miss, see WORKLOG session 9). Weigh recall vs.
+  speed / determinism.
 
 ## Suggested phasing
 
