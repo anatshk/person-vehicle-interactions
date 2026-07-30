@@ -73,6 +73,10 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 - When an ambiguity arises in the task, resolve it, document the decision and the
   alternatives considered (in the write-up), and proceed.
 - Keep scope reasonable — favor a clear, working pipeline.
+- **Task transitions:** when moving from one task/phase to the next, **remind me to compact
+  and clear the conversation context**, and first **write/update a handover file** (e.g.
+  `CURRENT_STATUS.md`) capturing current state + next steps, so the fresh context resumes
+  cleanly.
 
 ## Work log
 
