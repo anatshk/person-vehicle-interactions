@@ -6,6 +6,7 @@ import pytest
 
 from person_vehicle_interactions.detection_processing import (
     build_tracked_boxes,
+    COCO_ID_TO_NAME,
     filter_detections_by_class,
 )
 from tests.factories import make_tracked_box
@@ -80,13 +81,32 @@ def test_build_tracked_boxes_empty_input():
     assert boxes == []
 
 
+def test_build_tracked_boxes_maps_full_coco_classes():
+    boxes = build_tracked_boxes(
+        frame_index=0,
+        fps=30.0,
+        boxes_xyxy=[(0.0, 0.0, 1.0, 1.0), (0.0, 0.0, 1.0, 1.0)],
+        class_ids=[7, 8],
+        track_ids=[1, 2],
+        confidences=[0.9, 0.8],
+    )
+    assert [box.object_class for box in boxes] == ["truck", "boat"]
+
+
+def test_coco_id_to_name_covers_full_coco():
+    assert len(COCO_ID_TO_NAME) == 80
+    assert COCO_ID_TO_NAME[0] == "person"
+    assert COCO_ID_TO_NAME[2] == "car"
+    assert COCO_ID_TO_NAME[8] == "boat"
+
+
 def test_build_tracked_boxes_asserts_on_unknown_class_id():
     with pytest.raises(ValueError):
         build_tracked_boxes(
             frame_index=0,
             fps=30.0,
             boxes_xyxy=[(0.0, 0.0, 1.0, 1.0)],
-            class_ids=[7],
+            class_ids=[999],
             track_ids=[1],
             confidences=[0.9],
         )

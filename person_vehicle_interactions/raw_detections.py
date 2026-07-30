@@ -83,11 +83,8 @@ def tracks_from_raw(
     Rebuild TrackedBoxes from a raw JSONL file, without re-running the model.
 
     Converts each frame via ``build_tracked_boxes``, then keeps only the classes in
-    ``config.target_class_ids``.
+    ``config.target_class_ids`` (or all classes when it is ``None``).
     """
-    allowed_classes = {
-        COCO_ID_TO_NAME[class_id] for class_id in config.target_class_ids
-    }
     tracked_boxes: list[TrackedBox] = []
     for frame in read_raw(raw_path):
         tracked_boxes.extend(
@@ -100,4 +97,9 @@ def tracks_from_raw(
                 frame.confidences,
             )
         )
+    if config.target_class_ids is None:
+        return tracked_boxes
+    allowed_classes = {
+        COCO_ID_TO_NAME[class_id] for class_id in config.target_class_ids
+    }
     return filter_detections_by_class(tracked_boxes, allowed_classes)

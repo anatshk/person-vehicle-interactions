@@ -64,12 +64,15 @@ def run_inference(
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     partial_path = raw_path.with_name(raw_path.name + ".partial")
 
+    target_classes = (
+        None if config.target_class_ids is None else list(config.target_class_ids)
+    )
     model = YOLO(config.model_name)
     results = model.track(
         source=str(video_path),
         stream=True,
         persist=True,
-        classes=list(config.target_class_ids),
+        classes=target_classes,
         imgsz=config.image_size,
         conf=config.confidence_threshold,
         iou=config.iou_threshold,

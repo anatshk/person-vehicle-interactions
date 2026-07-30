@@ -3,11 +3,29 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from importlib import resources
+import json
 
 from person_vehicle_interactions.tracked_data_model import frame_to_seconds, TrackedBox
 
-# COCO class ids we care about, mapped to the names used throughout the pipeline.
-COCO_ID_TO_NAME: dict[int, str] = {0: "person", 2: "car"}
+
+def _load_coco_id_to_name() -> dict[int, str]:
+    """
+    Load the COCO id->name map from the packaged JSON reference.
+
+    The JSON is generated from the detector's own ``model.names`` (see the repo's data
+    file), so the mapping matches exactly what YOLO emits — kept out of the code as a
+    data file rather than an 80-entry literal.
+    """
+    resource = resources.files("person_vehicle_interactions").joinpath(
+        "data", "coco_classes.json"
+    )
+    raw_map = json.loads(resource.read_text(encoding="utf-8"))
+    return {int(class_id): name for class_id, name in raw_map.items()}
+
+
+# Full COCO-80 class id -> name map (loaded from data/coco_classes.json).
+COCO_ID_TO_NAME: dict[int, str] = _load_coco_id_to_name()
 
 
 def build_tracked_boxes(

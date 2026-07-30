@@ -111,6 +111,43 @@ def test_tracks_from_raw_filters_classes(tmp_path):
     assert [box.object_class for box in boxes] == ["person"]
 
 
+def test_tracks_from_raw_default_keeps_person_and_vehicles(tmp_path):
+    path = tmp_path / "clip.jsonl"
+    write_frames(
+        path,
+        [
+            (
+                0,
+                [[0.0, 0.0, 1.0, 1.0]] * 5,
+                [0, 2, 5, 7, 8],  # person, car, bus, truck, boat
+                [1, 2, 3, 4, 5],
+                [0.9, 0.9, 0.9, 0.9, 0.9],
+            ),
+        ],
+    )
+    boxes = tracks_from_raw(path, fps=30.0, config=DetectionConfig())
+    assert sorted(box.object_class for box in boxes) == ["bus", "car", "person", "truck"]
+
+
+def test_tracks_from_raw_none_keeps_all_classes(tmp_path):
+    path = tmp_path / "clip.jsonl"
+    write_frames(
+        path,
+        [
+            (
+                0,
+                [[10.0, 20.0, 30.0, 40.0], [0.0, 0.0, 5.0, 5.0], [1.0, 1.0, 2.0, 2.0]],
+                [0, 2, 8],  # person, car, boat
+                [1, 2, 3],
+                [0.9, 0.8, 0.7],
+            ),
+        ],
+    )
+    config = DetectionConfig(target_class_ids=None)  # unfiltered
+    boxes = tracks_from_raw(path, fps=30.0, config=config)
+    assert sorted(box.object_class for box in boxes) == ["boat", "car", "person"]
+
+
 def test_tracks_from_raw_empty(tmp_path):
     path = tmp_path / "clip.jsonl"
     path.write_text("", encoding="utf-8")
