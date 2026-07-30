@@ -113,9 +113,8 @@ def show_track(
                 ),
             )
             tiles.append(crop)
-            titles.append(
-                f"f{box.frame}/{metadata.frame_count} t{box.time_seconds:.2f}s"
-            )
+            # Frame index out of the clip's total frame count, e.g. "f5/45".
+            titles.append(f"f{box.frame}/{metadata.frame_count}")
     finally:
         capture.release()
 
