@@ -17,9 +17,12 @@ Pure (our dataclasses only), unit-tested in lean CI.
 from __future__ import annotations
 
 import dataclasses
+from typing import Literal
 
 from person_vehicle_interactions.candidate_detection import PredictedWindow
 from person_vehicle_interactions.gt_windows import InteractionWindow
+
+Label = Literal["TP", "FP", "FN"]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -32,6 +35,21 @@ class EvalResult:
     precision: float
     recall: float
     f1: float
+
+
+@dataclasses.dataclass(frozen=True)
+class LabeledWindow:
+    """
+    One window with its match outcome.
+
+    A ``TP`` carries both the predicted window and the ground-truth window it matched; an
+    ``FP`` carries only the (unmatched) prediction; an ``FN`` carries only the (unmatched)
+    ground-truth window.
+    """
+
+    label: Label
+    predicted: PredictedWindow | None = None
+    ground_truth: InteractionWindow | None = None
 
 
 def windows_overlap(
@@ -83,20 +101,23 @@ def evaluate_clips(
     return _result(total_true_positives, total_false_positives, total_false_negatives)
 
 
-def _count_matches(
+def classify_windows(
     predicted: list[PredictedWindow],
     ground_truth: list[InteractionWindow],
-) -> tuple[int, int]:
+) -> list[LabeledWindow]:
     """
-    Greedy one-to-one temporal matching -> (true_positives, false_positives).
+    Label each window by its greedy one-to-one temporal match outcome.
 
-    Predicted and GT windows are processed in ascending start-frame order for determinism.
+    Predictions are processed in ascending start-frame order, each claiming at most one
+    not-yet-matched overlapping GT window: a claimed prediction becomes a ``TP`` (carrying
+    the matched GT), an unclaimed one an ``FP``. Ground-truth windows left unmatched become
+    ``FN``. Returned as all predictions (in start-frame order) followed by the unmatched GT
+    windows (in start-frame order) — the same pairing evaluate_clip counts.
     """
     ordered_predicted = sorted(predicted, key=lambda window: window.start_frame)
     ordered_ground_truth = sorted(ground_truth, key=lambda window: window.start_frame)
     matched_ground_truth: set[int] = set()
-    true_positives = 0
-    false_positives = 0
+    labeled: list[LabeledWindow] = []
     for prediction in ordered_predicted:
         match_index = next(
             (
@@ -108,11 +129,29 @@ def _count_matches(
             None,
         )
         if match_index is None:
-            false_positives += 1
+            labeled.append(LabeledWindow("FP", predicted=prediction))
         else:
             matched_ground_truth.add(match_index)
-            true_positives += 1
-    return true_positives, false_positives
+            labeled.append(
+                LabeledWindow(
+                    "TP",
+                    predicted=prediction,
+                    ground_truth=ordered_ground_truth[match_index],
+                )
+            )
+    for index, gt_window in enumerate(ordered_ground_truth):
+        if index not in matched_ground_truth:
+            labeled.append(LabeledWindow("FN", ground_truth=gt_window))
+    return labeled
+
+
+def _count_matches(
+    predicted: list[PredictedWindow],
+    ground_truth: list[InteractionWindow],
+) -> tuple[int, int]:
+    """Greedy one-to-one temporal matching -> (true_positives, false_positives)."""
+    labels = [window.label for window in classify_windows(predicted, ground_truth)]
+    return labels.count("TP"), labels.count("FP")
 
 
 def _result(

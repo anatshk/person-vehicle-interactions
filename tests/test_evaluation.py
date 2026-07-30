@@ -5,9 +5,11 @@ from __future__ import annotations
 import pytest
 
 from person_vehicle_interactions.evaluation import (
+    classify_windows,
     EvalResult,
     evaluate_clip,
     evaluate_clips,
+    LabeledWindow,
     windows_overlap,
 )
 from tests.factories import make_interaction_gt as _gt
@@ -124,3 +126,63 @@ def test_evaluate_clips_handles_clip_with_gt_but_no_predictions():
         result.false_positives,
         result.false_negatives,
     ) == expected_counts
+
+
+# --- classify_windows (per-window TP/FP/FN labels) ----------------------------
+
+
+def test_classify_windows_single_match_is_tp():
+    prediction = _pred(8, 22)
+    ground_truth = _gt(10, 20)
+    labeled = classify_windows([prediction], [ground_truth])
+    assert labeled == [
+        LabeledWindow("TP", predicted=prediction, ground_truth=ground_truth)
+    ]
+
+
+def test_classify_windows_miss_and_spurious():
+    # Predicted far from the only GT: the prediction is an FP, the GT an unmatched FN.
+    prediction = _pred(100, 110)
+    ground_truth = _gt(10, 20)
+    labeled = classify_windows([prediction], [ground_truth])
+    assert labeled == [
+        LabeledWindow("FP", predicted=prediction, ground_truth=None),
+        LabeledWindow("FN", predicted=None, ground_truth=ground_truth),
+    ]
+
+
+def test_classify_windows_fragmentation_extra_is_fp():
+    # Two predictions overlap one GT -> first is TP, the extra is an FP (one-to-one).
+    first = _pred(10, 14)
+    second = _pred(16, 20)
+    ground_truth = _gt(10, 20)
+    labeled = classify_windows([first, second], [ground_truth])
+    assert labeled == [
+        LabeledWindow("TP", predicted=first, ground_truth=ground_truth),
+        LabeledWindow("FP", predicted=second, ground_truth=None),
+    ]
+
+
+def test_classify_windows_no_predictions_is_fn():
+    ground_truth = _gt(10, 20)
+    assert classify_windows([], [ground_truth]) == [
+        LabeledWindow("FN", predicted=None, ground_truth=ground_truth)
+    ]
+
+
+def test_classify_windows_no_ground_truth_is_fp():
+    prediction = _pred(0, 10)
+    assert classify_windows([prediction], []) == [
+        LabeledWindow("FP", predicted=prediction, ground_truth=None)
+    ]
+
+
+def test_classify_windows_labels_match_evaluate_counts():
+    # The per-window labels must reconcile exactly with evaluate_clip's aggregate counts.
+    predicted = [_pred(10, 14), _pred(16, 20), _pred(100, 110)]
+    ground_truth = [_gt(10, 20), _gt(50, 60)]
+    labels = [window.label for window in classify_windows(predicted, ground_truth)]
+    result = evaluate_clip(predicted, ground_truth)
+    assert labels.count("TP") == result.true_positives
+    assert labels.count("FP") == result.false_positives
+    assert labels.count("FN") == result.false_negatives
