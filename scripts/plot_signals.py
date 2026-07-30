@@ -13,7 +13,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from person_vehicle_interactions.config import TRACKS_DIR, VIZ_DIR
+from person_vehicle_interactions.config import (
+    TRACKS_DIR,
+    vehicle_class_names_for_clip,
+    VIZ_DIR,
+)
 from person_vehicle_interactions.gt_windows import load_gt_windows
 from person_vehicle_interactions.interaction_signals import (
     candidate_pairs,
@@ -23,7 +27,6 @@ from person_vehicle_interactions.signal_plots import plot_pair_signals
 from person_vehicle_interactions.tracked_data_model import load_tracks
 
 GT_CSV = Path("ground_truth/interactions.csv")
-VEHICLE_CLASSES = {"car", "bus", "truck", "boat"}
 
 
 def plot_clip(
@@ -37,7 +40,8 @@ def plot_clip(
     """Plot every candidate pair for one clip; return the number of plots written."""
     boxes = load_tracks(tracks_dir / f"{clip_id}.csv")
     gt_windows = gt_windows_by_clip.get(clip_id, [])
-    pairs = candidate_pairs(boxes, VEHICLE_CLASSES, max_distance, min_overlap)
+    vehicle_classes = vehicle_class_names_for_clip(clip_id)
+    pairs = candidate_pairs(boxes, vehicle_classes, max_distance, min_overlap)
     out_dir = viz_dir / "signals" / clip_id
     for person_id, vehicle_id in pairs:
         series = pair_signal_series(boxes, person_id, vehicle_id)
