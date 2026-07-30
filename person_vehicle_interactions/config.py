@@ -41,6 +41,20 @@ def target_class_ids_for_clip(clip_id: str) -> tuple[int, ...]:
     return (PERSON_CLASS_ID,) + vehicle_class_ids_for_clip(clip_id)
 
 
+def vehicle_class_names_for_clip(clip_id: str) -> set[str]:
+    """
+    Return the vehicle class *names* for a clip (COCO names of its vehicle class ids).
+
+    The single source of truth for "which classes count as a vehicle" for consumers that
+    work with class names (e.g. tracked boxes / signals) rather than ids.
+    """
+    from person_vehicle_interactions.detection_processing import COCO_ID_TO_NAME
+
+    return {
+        COCO_ID_TO_NAME[class_id] for class_id in vehicle_class_ids_for_clip(clip_id)
+    }
+
+
 @dataclasses.dataclass(frozen=True)
 class DetectionConfig:
     """Detection + tracking parameters, pinned for determinism."""
