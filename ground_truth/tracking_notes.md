@@ -80,7 +80,11 @@ output fields. (Extends the existing PLAN "merge rule"; fold into PLAN on the ne
 - **id31** — the **door of the main car** tracked as its own object (spurious sub-part).
 - **id4** — unclear, **probably a background object** (spurious).
 - **id46** — the **female** person (OK).
-- **Missed:** the **male** person is not tracked at all.
+- **Missed:** the **male** person is not tracked at all. Detection-only check (f86–112, GT
+  entry f90–108): detected as `person` only fleetingly (f87–88, incl. 2 persons at f88),
+  then **0 persons through the entry (f90–108)** — only the car (as `boat`); f100+ returns
+  nothing (scene cut / view clears). → **detection-recall miss**, like iMGR. (Sheet:
+  `cache/viz/detect_check/HIu4lM4B8hA_1_detect_86_112.png`.)
 - → real objects ≈ 2 cars + 2 people; 3 of the 5 "boat" ids are spurious/duplicate, and a
   person is missing. Hard clip (low-res night).
 
