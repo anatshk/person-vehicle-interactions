@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from person_vehicle_interactions.candidate_detection import (
     detect_candidates,
+    detect_candidates_from_series,
     frame_is_contact,
+    pair_series_by_pair,
     PredictedWindow,
     Thresholds,
 )
@@ -136,3 +138,43 @@ def test_detect_no_contact_is_empty():
         _vehicle(0, 2, 0, 0, 100, 100),
     ]
     assert detect_candidates(boxes, VEHICLE_CLASSES, thresholds) == []
+
+
+# --- precomputed series (fitting fast path) -----------------------------------
+
+
+def test_pair_series_by_pair_covers_every_sharing_pair():
+    boxes = [
+        _person(0, 1, 10, 10, 20, 20),
+        _vehicle(0, 2, 0, 0, 100, 100),
+        _person(0, 3, 1000, 1000, 1010, 1010),  # shares frame 0 with vehicle 2 but far
+    ]
+    series_by_pair = pair_series_by_pair(boxes, VEHICLE_CLASSES)
+    assert set(series_by_pair) == {(1, 2), (3, 2)}
+    assert series_by_pair[(1, 2)][0].overlap == 1.0
+
+
+def test_pair_series_by_pair_skips_pairs_that_never_share_a_frame():
+    boxes = [
+        _person(0, 1, 10, 10, 20, 20),
+        _vehicle(5, 2, 0, 0, 100, 100),  # different frame -> no shared frames
+    ]
+    assert pair_series_by_pair(boxes, VEHICLE_CLASSES) == {}
+
+
+def test_detect_from_series_matches_detect_candidates():
+    thresholds = Thresholds(
+        min_overlap=0.05, max_distance=0.5, min_duration_frames=2, max_gap_frames=1
+    )
+    boxes = []
+    for frame in range(5):
+        boxes += [
+            _person(frame, 1, 10, 10, 20, 20),
+            _vehicle(frame, 2, 0, 0, 100, 100),
+            _person(frame, 3, 30, 30, 40, 40),
+            _vehicle(frame, 4, 0, 0, 100, 100),
+        ]
+    series_by_pair = pair_series_by_pair(boxes, VEHICLE_CLASSES)
+    assert detect_candidates_from_series(
+        series_by_pair, thresholds
+    ) == detect_candidates(boxes, VEHICLE_CLASSES, thresholds)
