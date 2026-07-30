@@ -10,6 +10,7 @@ CACHE_DIR = Path("cache")
 RAW_DIR = CACHE_DIR / "raw"
 TRACKS_DIR = CACHE_DIR / "tracks"
 VIZ_DIR = CACHE_DIR / "viz"
+RESULTS_DIR = CACHE_DIR / "results"
 
 # COCO class id for the person we look for interactions with.
 PERSON_CLASS_ID: int = 0
