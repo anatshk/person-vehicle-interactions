@@ -46,7 +46,23 @@ map — expand the vehicle definition automatically when video quality is low.
 polluting other clips; COCO map kept as an external data file (stdlib load, no ultralytics
 in the pure module); object sheets select by confidence, not box size.
 
-**Next:** ID-switch / track-merge investigation; then P2 signals + threshold-tuning graphs.
+**Object-noting review (all 8 clips):** went clip-by-clip through the `show_objects` sheets
+recording tracking issues → [ground_truth/tracking_notes.md](ground_truth/tracking_notes.md).
+**ID switches are pervasive** — interacting objects fragment into 2–11 track ids (worst: the
+cover-remover in `1THkHYIQ_bY_0` ≈ 11 ids); plus spurious tracks (open car doors, car-cover
+artifacts) and a couple of missed people. **Decision:** don't retune/rerun tracking
+(expensive); instead **merge interactions in postprocessing** using person description +
+vehicle description + interaction location (+ temporal adjacency) — so descriptions/location
+become **merge keys**, computed early.
+
+**iMGR missed woman — detection vs tracking:** `iMGR_0AG3a8_2_3` GT #2 (woman exits black car,
+f128–132) is untracked. Two checks: (1) an **unfiltered** run adds no person (not a
+misclassification); (2) **detection-only** `predict` on frames 126–134 gives **0 person
+detections during the exit** (isolated single hits at f132/f134 only). → a **detection-recall
+miss**, not a tracking edge case. Deferred to a higher-recall detector / SAHI tiling.
+
+**Next:** P2 signals (overlap/distance/confidence per pair) + threshold-tuning graphs with GT
+overlay; interaction-level merge (P3) keyed on descriptions + location.
 
 ---
 
