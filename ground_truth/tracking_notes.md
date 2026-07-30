@@ -125,7 +125,10 @@ Only the relevant objects noted (rest are background people, not itemized):
 ### iMGR_0AG3a8_2_3 (47 objects) — indoor ceiling CCTV; mostly parked cars
 - **White car** — id3, 138, 140, 236 (4 ids); ID switch.
 - **Woman of the white car** — id5, 33, 55, 93, 137 (5 ids); ID switch.
-- **Black car** — id130, 132, 230 (3 ids); ID switch.
+- **Black car** — id130, 132, 230 (3 ids); ID switch. For **GT #2 (the exit)** the interaction
+  vehicle is the **merge of car boxes 130 + 132** (stacked: 130 upper/rear y≈181–292, 132
+  lower/front y≈280–399 → together the whole SUV; 130 is flaky, drops at f128/f130). Noted
+  because the FN sheet shows many cars — this identifies which boxes are the relevant vehicle.
 - **Woman getting out of the black car** — **MISSED** (not tracked).
 - Rest: parked cars.
 - **Unfiltered probe result:** all-classes run gives car 40, person 7, **truck 2** (49

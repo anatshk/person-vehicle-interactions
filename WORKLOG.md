@@ -18,6 +18,66 @@ Entry template:
 
 ---
 
+## 2026-07-30 — Session 10: output layer + interaction contact sheets
+
+**Narrative:** Built the output/inspection layer over the tuned detector (PRs #27–#31):
+`evaluation.classify_windows` exposing per-window **TP/FP/FN** `LabeledWindow`s (evaluate_*
+re-expressed on it, counts unchanged); `window_summary.summarize_window` (peak overlap, min
+distance, mean/min/max person+vehicle confidence, duration); `interaction_records`
+(`InteractionRecord` + timestamped per-clip `results.json` writer/loader) with a
+`descriptions.describe(crop)` **placeholder captioner hook** + `placeholder_description`; and
+`scripts/show_interactions.py`, a **TP/FP/FN contact-sheet renderer** (per-clip
+`detect_candidates → classify_windows`, person(green)/vehicle(red) boxes drawn across the span
++ pre/post context, tiles captioned `ov=/d=`, title carrying thresholds and peakOv/minDist).
+Reused/added pure helpers `loso.fold_thresholds_by_clip` and `track_selection.sample_span_frames`.
+
+**Sheets generated (all 8 clips, LOSO fold thresholds):** **19 sheets = 10 TP / 6 FP / 3 FN**
+(reconciles with the LOSO report), in `cache/viz/interactions/` as
+`<clip>_<personid>_<vehicleid>_<start>-<end>_<TP|FP>.png` (FN: `<clip>_gt<id>_<start>-<end>_FN`).
+
+**Visual analysis (user, in progress):**
+- **`NmlzoaDcOuI_1` p66×v1 f93–102 labeled TP is really an FP** — a passer-by walking in front
+  of the car, coinciding in time with a real driver-swap interaction (GT #2). Two root causes:
+  (1) `classify_windows` matches predictions to GT by **temporal overlap only, not identity**;
+  (2) **single-camera bbox ambiguity** — passing-in-front looks identical to entering by
+  overlap alone, worst in this multi-person driver-swap. GT is correct; the detector locked
+  onto the wrong nearby person and the temporal-only metric credited it. → limitations material.
+- **`gt1125_06` p111×v5 f369–381 labeled FP is really a TP** — the contiguous continuation
+  (person ID switch 18→111, same vehicle v5, boundary f369) of the TP p18×v5 f239–369, both
+  inside GT #2 (enter, f228–516, black SUV). GT is correct; the second fragment can't re-claim
+  the already-matched GT under **one-to-one** matching, so it scores FP. `p114×v29 388–412`
+  likely a third fragment on the same event.
+- **ptz `mKzCQKTHizw_0` GT #1 — label swap (occupancy trigger), NOT fragmentation.** The FP
+  `45×49 f271–289` is the *real* enter (woman runs in + gets into the gray car, peakOv 0.98);
+  the TP `51×49 f262–287` is a **different person already seated inside** (p45 f190–289 vs p51
+  f262–287, co-present 262–287) — sustained overlap, no mount/dismount → should be FP.
+  One-to-one gave GT #1 to the earlier occupant (f262<f271), swapping the labels. **Not a GT
+  issue.** New failure mode: seated occupant ≈ enterer by overlap alone → needs an **enter/exit
+  transition** signature (overlap low→high / high→low), not "overlap high for N frames".
+- **iMGR `_gt2` exit vehicle = merge of car boxes 130+132** (stacked; 130 upper/rear flaky, 132
+  lower/front) — recorded in `tracking_notes.md` so the cluttered FN sheet's relevant vehicle is
+  explicit; useful for the description/merge + identity eval. (The woman herself is the
+  documented detection-recall miss → "person not detected in span".)
+- **Net:** the temporal-only, one-to-one matcher mislabels **both ways** — false TPs (identity:
+  hard p66; occupancy: ptz) and false FPs (fragmentation: gt1125). → motivates description-based
+  interaction merge + identity-aware matching + an enter/exit transition signal.
+
+**Ideas raised (running list in CURRENT_STATUS.md):** expand the title's shortcut names into an
+explicit legend; add **per-frame detection confidence** to each tile (help weed out FPs); build
+the **description pipeline as a merge key** to unify fragmented interactions.
+
+**Decisions:** temporal-overlap matching kept for now (identity-aware matching is future work);
+`results.json` is **per-clip only**, timestamped filename; descriptions injected via a
+`describe_window` callback so the records core stays captioner-agnostic; enter/exit/other typing
+stays **dropped** (not required). Sheets use LOSO fold thresholds by default (`--fit-on-all`
+option) so labels match the report.
+
+**Next:** `results.json` generation script on real clips (glue: detect + `describe_window` via
+`placeholder_description` + `write_clip_records`); then captioner selection, interaction merge,
+and deliverables (README, ≤2-page write-up, make repo public).
+
+---
+
 ## 2026-07-30 — Session 9: class-filter config + per-clip vehicle classes
 
 **Narrative:** Made the detection class filter configurable and separated a "vehicle"
