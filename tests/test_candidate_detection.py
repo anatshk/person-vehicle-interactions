@@ -8,48 +8,10 @@ from person_vehicle_interactions.candidate_detection import (
     PredictedWindow,
     Thresholds,
 )
-from person_vehicle_interactions.interaction_signals import PairFrameSignal
-from tests.factories import make_tracked_box
-
-VEHICLE_CLASSES = {"car", "bus", "truck", "boat"}
-
-
-def _person(frame, track_id, x1, y1, x2, y2, confidence=0.9):
-    return make_tracked_box(
-        frame=frame,
-        track_id=track_id,
-        object_class="person",
-        x1=x1,
-        y1=y1,
-        x2=x2,
-        y2=y2,
-        confidence=confidence,
-    )
-
-
-def _vehicle(frame, track_id, x1, y1, x2, y2, confidence=0.8, object_class="car"):
-    return make_tracked_box(
-        frame=frame,
-        track_id=track_id,
-        object_class=object_class,
-        x1=x1,
-        y1=y1,
-        x2=x2,
-        y2=y2,
-        confidence=confidence,
-    )
-
-
-def _signal(frame, overlap, distance, person_confidence=0.9, vehicle_confidence=0.8):
-    return PairFrameSignal(
-        frame=frame,
-        time_seconds=frame / 30.0,
-        overlap=overlap,
-        distance=distance,
-        person_confidence=person_confidence,
-        vehicle_confidence=vehicle_confidence,
-    )
-
+from tests.factories import make_pair_signal as _signal
+from tests.factories import make_person as _person
+from tests.factories import make_vehicle as _vehicle
+from tests.factories import VEHICLE_CLASSES
 
 # --- frame_is_contact ---------------------------------------------------------
 
