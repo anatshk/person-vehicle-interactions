@@ -15,11 +15,14 @@ from __future__ import annotations
 import dataclasses
 
 from person_vehicle_interactions.interaction_signals import (
-    candidate_pairs,
     pair_signal_series,
     PairFrameSignal,
+    person_track_ids,
+    vehicle_track_ids,
 )
 from person_vehicle_interactions.tracked_data_model import TrackedBox
+
+PairId = tuple[int, int]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -74,6 +77,50 @@ def frame_is_contact(signal: PairFrameSignal, thresholds: Thresholds) -> bool:
     )
 
 
+def pair_series_by_pair(
+    boxes: list[TrackedBox], vehicle_classes: set[str]
+) -> dict[PairId, list[PairFrameSignal]]:
+    """
+    Precompute the per-frame signal series for every (person, vehicle) pair that shares a
+    frame.
+
+    The signals do not depend on any threshold, so computing them once and thresholding the
+    result repeatedly (see :func:`detect_candidates_from_series`) avoids re-scanning the
+    tracks for every candidate threshold during fitting. Pairs that never share a frame are
+    omitted.
+    """
+    series_by_pair: dict[PairId, list[PairFrameSignal]] = {}
+    vehicle_ids = vehicle_track_ids(boxes, vehicle_classes)
+    for person_id in person_track_ids(boxes):
+        for vehicle_id in vehicle_ids:
+            series = pair_signal_series(boxes, person_id, vehicle_id)
+            if series:
+                series_by_pair[(person_id, vehicle_id)] = series
+    return series_by_pair
+
+
+def detect_candidates_from_series(
+    series_by_pair: dict[PairId, list[PairFrameSignal]],
+    thresholds: Thresholds,
+) -> list[PredictedWindow]:
+    """
+    Detect predicted interaction windows from precomputed per-pair signal series.
+
+    Returned sorted by (person_id, vehicle_id, start_frame).
+    """
+    windows: list[PredictedWindow] = []
+    for (person_id, vehicle_id), series in sorted(series_by_pair.items()):
+        contact_frames = [
+            signal.frame for signal in series if frame_is_contact(signal, thresholds)
+        ]
+        for start_frame, end_frame in _runs(contact_frames, thresholds.max_gap_frames):
+            if end_frame - start_frame + 1 >= thresholds.min_duration_frames:
+                windows.append(
+                    PredictedWindow(person_id, vehicle_id, start_frame, end_frame)
+                )
+    return windows
+
+
 def detect_candidates(
     boxes: list[TrackedBox],
     vehicle_classes: set[str],
@@ -84,24 +131,9 @@ def detect_candidates(
 
     Returned sorted by (person_id, vehicle_id, start_frame).
     """
-    windows: list[PredictedWindow] = []
-    pairs = candidate_pairs(
-        boxes,
-        vehicle_classes,
-        max_distance=thresholds.max_distance,
-        min_overlap=thresholds.min_overlap,
+    return detect_candidates_from_series(
+        pair_series_by_pair(boxes, vehicle_classes), thresholds
     )
-    for person_id, vehicle_id in pairs:
-        series = pair_signal_series(boxes, person_id, vehicle_id)
-        contact_frames = [
-            signal.frame for signal in series if frame_is_contact(signal, thresholds)
-        ]
-        for start_frame, end_frame in _runs(contact_frames, thresholds.max_gap_frames):
-            if end_frame - start_frame + 1 >= thresholds.min_duration_frames:
-                windows.append(
-                    PredictedWindow(person_id, vehicle_id, start_frame, end_frame)
-                )
-    return windows
 
 
 def _runs(frames: list[int], max_gap_frames: int) -> list[tuple[int, int]]:

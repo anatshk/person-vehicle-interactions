@@ -16,7 +16,8 @@ import dataclasses
 import itertools
 
 from person_vehicle_interactions.candidate_detection import (
-    detect_candidates,
+    detect_candidates_from_series,
+    pair_series_by_pair,
     Thresholds,
 )
 from person_vehicle_interactions.evaluation import EvalResult, evaluate_clips
@@ -74,19 +75,21 @@ def fit_thresholds(
     """
     Return the grid thresholds with the best aggregate F1 over the training clips.
 
-    For each candidate, detect windows on every clip (with that clip's vehicle classes) and
-    score the aggregate against the ground truth. The first candidate reaching the maximum
-    F1 wins the tie, so the result is deterministic given the grid order.
+    Each clip's per-pair signal series is computed once up front and re-thresholded for every
+    grid candidate (the signals are threshold-independent), so fitting does not re-scan the
+    tracks per candidate. For each candidate the aggregate is scored against the ground truth;
+    the first candidate reaching the maximum F1 wins the tie, so the result is deterministic
+    given the grid order.
     """
+    series_by_clip = {
+        clip_id: pair_series_by_pair(boxes, vehicle_classes_by_clip[clip_id])
+        for clip_id, boxes in boxes_by_clip.items()
+    }
     best: FitResult | None = None
     for thresholds in grid:
         predicted_by_clip = {
-            clip_id: detect_candidates(
-                boxes,
-                vehicle_classes_by_clip[clip_id],
-                thresholds,
-            )
-            for clip_id, boxes in boxes_by_clip.items()
+            clip_id: detect_candidates_from_series(series, thresholds)
+            for clip_id, series in series_by_clip.items()
         }
         train_result = evaluate_clips(predicted_by_clip, ground_truth_by_clip)
         if best is None or train_result.f1 > best.train_result.f1:
