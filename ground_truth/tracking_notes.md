@@ -130,9 +130,10 @@ Only the relevant objects noted (rest are background people, not itemized):
   top-down angle), unlike HIu's car→boat *misclassification*. So no per-clip override helps
   here — it's a recall gap (higher-recall detector / SAHI tiling territory, deferred).
 - **Detection-only check (no tracking), GT frames 126–134** (interaction #2, exit f128–132):
-  YOLO `predict` per frame gives **0 person detections during the exit (f126–131)** and only
-  a single isolated person at f132 & f134. → **confirmed a detection-recall miss**, not a
-  tracking edge case: tracking never receives a stable run of detections to hold. (Sheet:
+  YOLO `predict` per frame detects **only cars (17–19) and nothing else** during f126–131;
+  the single "person" at f132/f134 is a **hand-only partial box** (not a legitimate person).
+  **Zero non-car/person classes** appear on her in any frame → she isn't mislabeled, she's
+  simply undetected. **Confirmed a detection-recall miss**, not a tracking edge case. (Sheet:
   `cache/viz/detect_check/iMGR_0AG3a8_2_3_detect_126_134.png`.)
 
 ### gt1125_06 (59 objects) — 4K aerial/drone, "wonderfully clear"; parking lot
