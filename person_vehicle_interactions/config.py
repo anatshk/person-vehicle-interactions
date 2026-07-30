@@ -5,9 +5,11 @@ from __future__ import annotations
 import dataclasses
 from pathlib import Path
 
+VIDEOS_DIR = Path("Videos")
 CACHE_DIR = Path("cache")
 RAW_DIR = CACHE_DIR / "raw"
 TRACKS_DIR = CACHE_DIR / "tracks"
+VIZ_DIR = CACHE_DIR / "viz"
 
 
 @dataclasses.dataclass(frozen=True)
