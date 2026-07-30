@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from person_vehicle_interactions.track_selection import (
     crop_window,
-    largest_box_per_track,
+    highest_confidence_box_per_track,
     sample_track_boxes,
 )
 from tests.factories import make_tracked_box
@@ -32,34 +32,35 @@ def test_sample_track_boxes_missing_track_returns_empty():
     assert sample_track_boxes(boxes, track_id=99, step=1) == []
 
 
-def test_largest_box_per_track_picks_max_area():
+def test_highest_confidence_box_per_track_picks_max_confidence():
     boxes = [
-        make_tracked_box(frame=0, track_id=1, x1=0, y1=0, x2=10, y2=10),
-        make_tracked_box(frame=1, track_id=1, x1=0, y1=0, x2=20, y2=20),
-        make_tracked_box(frame=0, track_id=2, x1=0, y1=0, x2=5, y2=5),
+        make_tracked_box(frame=0, track_id=1, confidence=0.6),
+        make_tracked_box(frame=1, track_id=1, confidence=0.9),
+        make_tracked_box(frame=0, track_id=2, confidence=0.5),
     ]
-    result = largest_box_per_track(boxes)
+    result = highest_confidence_box_per_track(boxes)
     assert [box.track_id for box in result] == [1, 2]
     assert result[0].frame == 1
+    assert result[0].confidence == 0.9
     assert result[1].frame == 0
 
 
-def test_largest_box_per_track_ties_prefer_earliest_frame():
+def test_highest_confidence_ties_prefer_larger_area():
     boxes = [
-        make_tracked_box(frame=3, track_id=1, x1=0, y1=0, x2=10, y2=10),
-        make_tracked_box(frame=1, track_id=1, x1=0, y1=0, x2=10, y2=10),
+        make_tracked_box(frame=0, track_id=1, confidence=0.8, x1=0, y1=0, x2=10, y2=10),
+        make_tracked_box(frame=1, track_id=1, confidence=0.8, x1=0, y1=0, x2=20, y2=20),
     ]
-    result = largest_box_per_track(boxes)
+    result = highest_confidence_box_per_track(boxes)
     assert len(result) == 1
-    assert result[0].frame == 1
+    assert result[0].frame == 1  # same confidence -> larger box wins
 
 
-def test_largest_box_per_track_sorted_by_track_id():
+def test_highest_confidence_sorted_by_track_id():
     boxes = [
-        make_tracked_box(frame=0, track_id=3, x1=0, y1=0, x2=10, y2=10),
-        make_tracked_box(frame=0, track_id=1, x1=0, y1=0, x2=10, y2=10),
+        make_tracked_box(frame=0, track_id=3, confidence=0.7),
+        make_tracked_box(frame=0, track_id=1, confidence=0.7),
     ]
-    result = largest_box_per_track(boxes)
+    result = highest_confidence_box_per_track(boxes)
     assert [box.track_id for box in result] == [1, 3]
 
 
