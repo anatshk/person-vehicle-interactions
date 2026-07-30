@@ -128,10 +128,15 @@ description, and a vehicle description. Pass-by is not an interaction.
 - **LLM-API description backend** — alternative to the local open-vocab model (see the
   Descriptions tradeoff); not taken for the submission.
 - **Alternative / higher-recall detectors** — try other models in place of `yolo11l`
-  (e.g. `yolo11x`, YOLO26, RT-DETR) to see whether **detection-recall misses** are
-  recovered — specifically the `iMGR_0AG3a8_2_3` woman exiting the black car, whom `yolo11l`
-  never detects (confirmed detection miss, see WORKLOG session 9). Weigh recall vs.
-  speed / determinism.
+  (e.g. `yolo11x`, YOLO26, RT-DETR) to see whether the **detection-recall misses** are
+  recovered. Look at these **known missed people together** (both confirmed detection
+  misses, not tracking — see WORKLOG session 9 / `ground_truth/tracking_notes.md`):
+  - `iMGR_0AG3a8_2_3` — woman exiting the black car (GT #2, f128–132); `yolo11l` detects
+    only a hand-blob.
+  - `HIu4lM4B8hA_1` — male entering the car (GT #2, f90–108); `yolo11l` detects him only
+    fleetingly at f87–88, nothing through the entry.
+
+  Weigh recall vs. speed / determinism.
 
 ## Suggested phasing
 
