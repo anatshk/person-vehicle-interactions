@@ -11,6 +11,35 @@ RAW_DIR = CACHE_DIR / "raw"
 TRACKS_DIR = CACHE_DIR / "tracks"
 VIZ_DIR = CACHE_DIR / "viz"
 
+# COCO class id for the person we look for interactions with.
+PERSON_CLASS_ID: int = 0
+
+# Which COCO classes count as a "vehicle" for interaction reasoning: car, bus, truck.
+VEHICLE_CLASS_IDS: tuple[int, ...] = (2, 5, 7)
+
+# Per-clip extra vehicle classes, keyed by clip id. Used where the scene causes the
+# detector to misclassify vehicles (e.g. cars labeled 'boat' in a low-res night clip).
+# TODO: expand the vehicle definition if the video quality is low — ideally drive this
+#       from clip properties (resolution / lighting) instead of a hardcoded per-clip map.
+CLIP_VEHICLE_CLASS_OVERRIDES: dict[str, tuple[int, ...]] = {
+    "HIu4lM4B8hA_1": (8,),  # boat: low-res night clip where cars misdetect as boat
+}
+
+
+def vehicle_class_ids_for_clip(clip_id: str) -> tuple[int, ...]:
+    """
+    Return the vehicle class ids for a clip: the base set plus any per-clip override.
+
+    The result is sorted and de-duplicated so it is deterministic.
+    """
+    extra_class_ids = CLIP_VEHICLE_CLASS_OVERRIDES.get(clip_id, ())
+    return tuple(sorted(set(VEHICLE_CLASS_IDS) | set(extra_class_ids)))
+
+
+def target_class_ids_for_clip(clip_id: str) -> tuple[int, ...]:
+    """Return the detection keep-set for a clip: person plus its vehicle classes."""
+    return (PERSON_CLASS_ID,) + vehicle_class_ids_for_clip(clip_id)
+
 
 @dataclasses.dataclass(frozen=True)
 class DetectionConfig:
@@ -22,6 +51,7 @@ class DetectionConfig:
     iou_threshold: float = 0.7
     tracker_name: str = "botsort.yaml"
     # COCO class ids to keep; ``None`` means unfiltered (detect/keep all classes).
-    # Default: person (0) + vehicle classes car (2), bus (5), truck (7).
-    target_class_ids: tuple[int, ...] | None = (0, 2, 5, 7)
+    # Default: person + the base vehicle classes; per-clip runs use
+    # ``target_class_ids_for_clip`` to add clip-specific vehicle classes.
+    target_class_ids: tuple[int, ...] | None = (PERSON_CLASS_ID,) + VEHICLE_CLASS_IDS
     seed: int = 0

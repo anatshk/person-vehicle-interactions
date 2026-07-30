@@ -10,10 +10,14 @@ Resumable — clips whose tracks are already cached are skipped. Run from the re
 from __future__ import annotations
 
 import argparse
+import dataclasses
 from pathlib import Path
 import time
 
-from person_vehicle_interactions.config import DetectionConfig
+from person_vehicle_interactions.config import (
+    DetectionConfig,
+    target_class_ids_for_clip,
+)
 from person_vehicle_interactions.tracker_engine import cache_clip_tracks
 
 DEFAULT_VIDEOS_DIR = Path("Videos")
@@ -28,12 +32,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    config = DetectionConfig()
+    base_config = DetectionConfig()
     clips = sorted(args.videos_dir.glob("*.mp4"))
     print(f"Found {len(clips)} clip(s) in {args.videos_dir}", flush=True)
 
     for index, video_path in enumerate(clips, start=1):
         clip_id = video_path.stem
+        # Per-clip keep-set so clips with detector quirks get their extra vehicle classes.
+        config = dataclasses.replace(
+            base_config, target_class_ids=target_class_ids_for_clip(clip_id)
+        )
         print(f"[{index}/{len(clips)}] {clip_id} ...", flush=True)
         started = time.perf_counter()
         tracks_path, _ = cache_clip_tracks(
