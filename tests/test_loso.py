@@ -6,6 +6,7 @@ import pytest
 
 from person_vehicle_interactions.loso import (
     all_clips,
+    fold_thresholds_by_clip,
     loso_splits,
     run_loso,
     scene_for_clip,
@@ -56,3 +57,18 @@ def test_run_loso_injects_train_and_test_clips():
         SCENE_UNITS[scene_for_clip("mKzCQKTHizw_0")]
     )
     assert "mKzCQKTHizw_0" not in ptz_result["thresholds"]["trained_on"]
+
+
+def test_fold_thresholds_by_clip_assigns_each_clip_its_folds_thresholds():
+    # Stub fit returns its train set, so each clip maps to "all clips but its own scene".
+    def fit(train_clips):
+        return tuple(sorted(train_clips))
+
+    thresholds_by_clip = fold_thresholds_by_clip(fit)
+    assert set(thresholds_by_clip) == set(all_clips())
+    for clip_id, trained_on in thresholds_by_clip.items():
+        scene_clips = set(SCENE_UNITS[scene_for_clip(clip_id)])
+        assert set(trained_on) == set(all_clips()) - scene_clips
+    # Same-scene clips share one fold's thresholds; different scenes differ.
+    assert thresholds_by_clip["mKzCQKTHizw_0"] == thresholds_by_clip["mKzCQKTHizw_1"]
+    assert thresholds_by_clip["gt1125_06"] != thresholds_by_clip["1THkHYIQ_bY_0"]
