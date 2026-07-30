@@ -126,7 +126,8 @@ def test_tracks_from_raw_default_keeps_person_and_vehicles(tmp_path):
         ],
     )
     boxes = tracks_from_raw(path, fps=30.0, config=DetectionConfig())
-    assert sorted(box.object_class for box in boxes) == ["bus", "car", "person", "truck"]
+    expected_classes = ["bus", "car", "person", "truck"]
+    assert sorted(box.object_class for box in boxes) == expected_classes
 
 
 def test_tracks_from_raw_none_keeps_all_classes(tmp_path):
@@ -145,7 +146,8 @@ def test_tracks_from_raw_none_keeps_all_classes(tmp_path):
     )
     config = DetectionConfig(target_class_ids=None)  # unfiltered
     boxes = tracks_from_raw(path, fps=30.0, config=config)
-    assert sorted(box.object_class for box in boxes) == ["boat", "car", "person"]
+    expected_classes = ["boat", "car", "person"]
+    assert sorted(box.object_class for box in boxes) == expected_classes
 
 
 def test_tracks_from_raw_empty(tmp_path):
