@@ -5,6 +5,7 @@ from __future__ import annotations
 from person_vehicle_interactions.track_selection import (
     crop_window,
     highest_confidence_box_per_track,
+    sample_span_frames,
     sample_track_boxes,
 )
 from tests.factories import make_tracked_box
@@ -91,3 +92,44 @@ def test_crop_window_respects_fraction():
         fraction=0.5,
     )
     assert (x2 - x1, y2 - y1) == (500, 500)
+
+
+# --- sample_span_frames -------------------------------------------------------
+
+
+def test_sample_span_frames_samples_span_with_pre_post_padding():
+    result = sample_span_frames(start_frame=10, end_frame=20, in_count=3, pad=2)
+    assert result == [
+        (8, "pre"),
+        (9, "pre"),
+        (10, "in"),
+        (15, "in"),
+        (20, "in"),
+        (21, "post"),
+        (22, "post"),
+    ]
+
+
+def test_sample_span_frames_drops_negative_pre_frames():
+    result = sample_span_frames(start_frame=1, end_frame=3, in_count=5, pad=3)
+    # pad reaches back to -2 (dropped); in_count exceeds the span so every frame is kept.
+    assert result == [
+        (0, "pre"),
+        (1, "in"),
+        (2, "in"),
+        (3, "in"),
+        (4, "post"),
+        (5, "post"),
+        (6, "post"),
+    ]
+
+
+def test_sample_span_frames_dedups_when_rounding_collides():
+    # A 2-frame span sampled 3x rounds two picks onto the same frame; keep it once.
+    result = sample_span_frames(start_frame=0, end_frame=1, in_count=3, pad=0)
+    assert result == [(0, "in"), (1, "in")]
+
+
+def test_sample_span_frames_single_in_sample_uses_start():
+    result = sample_span_frames(start_frame=5, end_frame=9, in_count=1, pad=0)
+    assert result == [(5, "in")]

@@ -11,6 +11,7 @@ importable where the heavy deps are absent (integration tests skip via importors
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,26 @@ from person_vehicle_interactions.tracked_data_model import (
 PathLike = Path | str
 
 BOX_COLOR_BGR = (0, 255, 0)
+PERSON_COLOR_BGR = (0, 255, 0)  # green
+VEHICLE_COLOR_BGR = (0, 0, 255)  # red
+
+
+@dataclasses.dataclass
+class BoxAnnotation:
+    """One box to draw on a frame: pixel corners, BGR color, and a short text label."""
+
+    box_xyxy: tuple[float, float, float, float]
+    color_bgr: tuple[int, int, int]
+    label: str
+
+
+@dataclasses.dataclass
+class FrameTile:
+    """One montage tile: a source frame index, its caption, and boxes to draw on it."""
+
+    frame_index: int
+    caption: str
+    annotations: list[BoxAnnotation]
 
 
 def show_objects(
@@ -123,6 +144,38 @@ def show_track(
     return _montage(tiles, titles, out_path, columns, suptitle)
 
 
+def render_frame_sheet(
+    video_path: PathLike,
+    tiles: list[FrameTile],
+    title: str,
+    out_path: PathLike,
+    columns: int = 5,
+) -> Path:
+    """
+    Render annotated frames as a titled montage and save it as a PNG; return the path.
+    Each tile's frame is read from ``video_path``, its boxes are drawn on it, and the tile
+    is captioned. Frame indices must be within the clip's frame count.
+    """
+    capture = _open_capture(video_path)
+    frames = []
+    captions = []
+    try:
+        for tile in tiles:
+            frame = _read_frame(capture, tile.frame_index)
+            for annotation in tile.annotations:
+                _draw_box(
+                    frame,
+                    annotation.box_xyxy,
+                    color=annotation.color_bgr,
+                    label=annotation.label,
+                )
+            frames.append(frame)
+            captions.append(tile.caption)
+    finally:
+        capture.release()
+    return _montage(frames, captions, out_path, columns, title)
+
+
 def _open_capture(video_path: PathLike) -> Any:
     """Open a cv2 VideoCapture, raising FileNotFoundError if the clip won't open."""
     import cv2
@@ -174,13 +227,30 @@ def _black_pad_crop(frame: Any, x1: int, y1: int, x2: int, y2: int) -> Any:
     return canvas
 
 
-def _draw_box(frame: Any, box_xyxy: tuple[float, float, float, float]) -> None:
-    """Draw a rectangle for one box (coordinates relative to ``frame``), in place."""
+def _draw_box(
+    frame: Any,
+    box_xyxy: tuple[float, float, float, float],
+    color: tuple[int, int, int] = BOX_COLOR_BGR,
+    label: str | None = None,
+) -> None:
+    """Draw a (optionally labeled) rectangle for one box, relative to ``frame``, in place."""
     import cv2
 
     x1, y1, x2, y2 = (int(round(coordinate)) for coordinate in box_xyxy)
     thickness = max(1, round(min(frame.shape[:2]) / 200))
-    cv2.rectangle(frame, (x1, y1), (x2, y2), BOX_COLOR_BGR, thickness)
+    cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
+    if label:
+        font_scale = max(0.4, min(frame.shape[:2]) / 600)
+        cv2.putText(
+            frame,
+            label,
+            (x1, max(0, y1 - 4)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            font_scale,
+            color,
+            thickness,
+            cv2.LINE_AA,
+        )
 
 
 def _montage(

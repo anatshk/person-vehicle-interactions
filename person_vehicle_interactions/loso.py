@@ -67,6 +67,22 @@ def loso_splits() -> list[LosoSplit]:
     return splits
 
 
+def fold_thresholds_by_clip(
+    fit_thresholds: Callable[[tuple[str, ...]], Thresholds],
+) -> dict[str, Thresholds]:
+    """
+    Map each clip to the thresholds fit on its LOSO fold (all clips outside its scene).
+    Fits once per fold and assigns that fold's thresholds to each of the held-out scene's
+    clips, so a clip is never scored with thresholds tuned on its own scene.
+    """
+    thresholds_by_clip: dict[str, Thresholds] = {}
+    for split in loso_splits():
+        thresholds = fit_thresholds(split.train_clips)
+        for clip_id in split.test_clips:
+            thresholds_by_clip[clip_id] = thresholds
+    return thresholds_by_clip
+
+
 def run_loso(
     fit_thresholds: Callable[[tuple[str, ...]], Thresholds],
     evaluate: Callable[[tuple[str, ...], Thresholds], Result],
