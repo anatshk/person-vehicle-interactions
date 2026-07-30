@@ -24,6 +24,11 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
   docstrings start with a line break** after the opening `"""` (summary on the next line,
   not the first); single-line docstrings stay on one line. _(A deliberate deviation from
   PEP 257 / Google's summary-on-first-line; not auto-enforced by Black/isort.)_
+- **No gratuitous blank lines** (not Black-enforced): don't put a blank line between a
+  multi-line docstring's summary and its body — _unless_ the docstring is long/structured
+  (e.g. has `Args:`/`Returns:`), where the separation aids scanning — nor a blank line at
+  the start of a function/method body before the first statement. Black-forced blanks stay,
+  and a multi-line docstring still starts on the line after the opening `"""`.
 - Use **meaningful, descriptive variable and function names** (per the Google style
   guide, but worth repeating) — avoid abbreviations and single-letter names except
   conventional short-lived loop indices.
