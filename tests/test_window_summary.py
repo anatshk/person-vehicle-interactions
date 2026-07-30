@@ -7,6 +7,9 @@ import pytest
 from person_vehicle_interactions.window_summary import summarize_window
 from tests.factories import make_pair_signal
 
+# Absolute tolerance for the floating-point aggregates (means divide by frame count).
+TOLERANCE = 1e-9
+
 
 def test_summarize_window_aggregates_signal_values():
     series = [
@@ -33,12 +36,16 @@ def test_summarize_window_aggregates_signal_values():
         ),
     ]
     summary = summarize_window(series, start_frame=10, end_frame=12, fps=30.0)
-    assert summary.peak_overlap == pytest.approx(0.6)
-    assert summary.min_distance == pytest.approx(0.4)
-    assert summary.mean_person_confidence == pytest.approx(0.9)
-    assert summary.mean_vehicle_confidence == pytest.approx(0.8)
+    assert summary.peak_overlap == pytest.approx(0.6, abs=TOLERANCE)
+    assert summary.min_distance == pytest.approx(0.4, abs=TOLERANCE)
+    assert summary.mean_person_confidence == pytest.approx(0.9, abs=TOLERANCE)
+    assert summary.min_person_confidence == pytest.approx(0.8, abs=TOLERANCE)
+    assert summary.max_person_confidence == pytest.approx(1.0, abs=TOLERANCE)
+    assert summary.mean_vehicle_confidence == pytest.approx(0.8, abs=TOLERANCE)
+    assert summary.min_vehicle_confidence == pytest.approx(0.7, abs=TOLERANCE)
+    assert summary.max_vehicle_confidence == pytest.approx(0.9, abs=TOLERANCE)
     assert summary.duration_frames == 3
-    assert summary.duration_seconds == pytest.approx(3 / 30.0)
+    assert summary.duration_seconds == pytest.approx(3 / 30.0, abs=TOLERANCE)
 
 
 def test_summarize_window_ignores_signals_outside_span():
@@ -49,10 +56,10 @@ def test_summarize_window_ignores_signals_outside_span():
         make_pair_signal(frame=20, overlap=0.95, distance=0.02),  # after span
     ]
     summary = summarize_window(series, start_frame=10, end_frame=11, fps=25.0)
-    assert summary.peak_overlap == pytest.approx(0.5)
-    assert summary.min_distance == pytest.approx(0.5)
+    assert summary.peak_overlap == pytest.approx(0.5, abs=TOLERANCE)
+    assert summary.min_distance == pytest.approx(0.5, abs=TOLERANCE)
     assert summary.duration_frames == 2
-    assert summary.duration_seconds == pytest.approx(2 / 25.0)
+    assert summary.duration_seconds == pytest.approx(2 / 25.0, abs=TOLERANCE)
 
 
 def test_summarize_window_duration_spans_the_full_window_not_just_present_frames():
@@ -63,7 +70,7 @@ def test_summarize_window_duration_spans_the_full_window_not_just_present_frames
     ]
     summary = summarize_window(series, start_frame=10, end_frame=12, fps=30.0)
     assert summary.duration_frames == 3
-    assert summary.duration_seconds == pytest.approx(3 / 30.0)
+    assert summary.duration_seconds == pytest.approx(3 / 30.0, abs=TOLERANCE)
 
 
 def test_summarize_window_raises_when_no_signals_in_span():
