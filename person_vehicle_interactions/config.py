@@ -21,5 +21,7 @@ class DetectionConfig:
     confidence_threshold: float = 0.25
     iou_threshold: float = 0.7
     tracker_name: str = "botsort.yaml"
-    target_class_ids: tuple[int, ...] = (0, 2)
+    # COCO class ids to keep; ``None`` means unfiltered (detect/keep all classes).
+    # Default: person (0) + vehicle classes car (2), bus (5), truck (7).
+    target_class_ids: tuple[int, ...] | None = (0, 2, 5, 7)
     seed: int = 0
