@@ -41,7 +41,6 @@ class EvalResult:
 class LabeledWindow:
     """
     One window with its match outcome.
-
     A ``TP`` carries both the predicted window and the ground-truth window it matched; an
     ``FP`` carries only the (unmatched) prediction; an ``FN`` carries only the (unmatched)
     ground-truth window.
@@ -107,7 +106,6 @@ def classify_windows(
 ) -> list[LabeledWindow]:
     """
     Label each window by its greedy one-to-one temporal match outcome.
-
     Predictions are processed in ascending start-frame order, each claiming at most one
     not-yet-matched overlapping GT window: a claimed prediction becomes a ``TP`` (carrying
     the matched GT), an unclaimed one an ``FP``. Ground-truth windows left unmatched become
