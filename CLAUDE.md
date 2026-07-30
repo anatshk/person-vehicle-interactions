@@ -88,6 +88,11 @@ assumptions, limitations, and next steps. `Videos/` is git-ignored input data.
 ## Commits & git
 
 - Work lands via **reviewed PRs** merged on GitHub (feature branches off `main`).
+- **Merge strategy:** prefer **"Rebase and merge"** on GitHub (not squash). For **stacked
+  PRs**, **land the base PR before the one stacked on it** — merging a stacked PR into a
+  base branch that is then squash-merged/deleted can **silently drop the stacked PR's
+  commits from `main`** even though GitHub marks it "merged" (this happened with #14 and had
+  to be re-landed). Keep stacks shallow, or rebase onto `main` and retarget as bases land.
 - **PR comment replies** are posted via `gh` under the authenticated (human) account, so
   tag each reply with **`[Claude-<model>]`** (currently `[Claude-Opus-4.8]`) so it's
   clearly Claude replying, not the reviewer replying to themselves.
