@@ -6,6 +6,7 @@ from person_vehicle_interactions.config import (
     target_class_ids_for_clip,
     VEHICLE_CLASS_IDS,
     vehicle_class_ids_for_clip,
+    vehicle_class_names_for_clip,
 )
 
 
@@ -24,3 +25,13 @@ def test_vehicle_class_ids_includes_clip_override():
 def test_target_class_ids_prepends_person():
     assert target_class_ids_for_clip("some_clip") == (0, 2, 5, 7)
     assert target_class_ids_for_clip("HIu4lM4B8hA_1") == (0, 2, 5, 7, 8)
+
+
+def test_vehicle_class_names_for_clip():
+    assert vehicle_class_names_for_clip("some_clip") == {"car", "bus", "truck"}
+    assert vehicle_class_names_for_clip("HIu4lM4B8hA_1") == {
+        "car",
+        "bus",
+        "truck",
+        "boat",
+    }
