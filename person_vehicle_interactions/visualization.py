@@ -17,7 +17,7 @@ from typing import Any
 from person_vehicle_interactions.config import TRACKS_DIR, VIDEOS_DIR, VIZ_DIR
 from person_vehicle_interactions.track_selection import (
     crop_window,
-    largest_box_per_track,
+    highest_confidence_box_per_track,
     sample_track_boxes,
 )
 from person_vehicle_interactions.tracked_data_model import (
@@ -39,20 +39,21 @@ def show_objects(
     columns: int = 4,
 ) -> Path:
     """
-    Render one tile per tracked object (its largest-box crop), labeled by track id.
+    Render one tile per tracked object (its highest-confidence-frame crop), labeled by
+    track id.
 
     Returns the path of the written PNG (``<viz_dir>/objects/<clip_id>.png``).
     """
     boxes = load_tracks(Path(tracks_dir) / f"{clip_id}.csv")
-    largest_boxes = largest_box_per_track(boxes)
-    if not largest_boxes:
+    representative_boxes = highest_confidence_box_per_track(boxes)
+    if not representative_boxes:
         raise ValueError(f"No tracked objects for clip {clip_id!r}.")
 
     capture = _open_capture(Path(videos_dir) / f"{clip_id}.mp4")
     tiles = []
     titles = []
     try:
-        for box in largest_boxes:
+        for box in representative_boxes:
             frame = _read_frame(capture, box.frame)
             tiles.append(_tight_crop(frame, box))
             titles.append(f"id{box.track_id} {box.object_class} {box.confidence:.2f}")
@@ -60,7 +61,7 @@ def show_objects(
         capture.release()
 
     out_path = Path(viz_dir) / "objects" / f"{clip_id}.png"
-    suptitle = f"{clip_id} — {len(largest_boxes)} tracked objects"
+    suptitle = f"{clip_id} — {len(representative_boxes)} tracked objects"
     return _montage(tiles, titles, out_path, columns, suptitle)
 
 
@@ -112,7 +113,9 @@ def show_track(
                 ),
             )
             tiles.append(crop)
-            titles.append(f"f{box.frame} t{box.time_seconds:.2f}s")
+            titles.append(
+                f"f{box.frame}/{metadata.frame_count} t{box.time_seconds:.2f}s"
+            )
     finally:
         capture.release()
 

@@ -24,22 +24,24 @@ def sample_track_boxes(
     return track_boxes[::step]
 
 
-def largest_box_per_track(boxes: list[TrackedBox]) -> list[TrackedBox]:
+def highest_confidence_box_per_track(boxes: list[TrackedBox]) -> list[TrackedBox]:
     """
-    Return each track's largest-area box, one per track, sorted by track id.
+    Return each track's highest-confidence box, one per track, sorted by track id.
 
-    Ties on area are broken by the earliest frame, so the result is deterministic.
+    Ties on confidence are broken by larger box area, then earliest frame, so the
+    result is deterministic.
     """
     best_by_track: dict[int, TrackedBox] = {}
     for box in boxes:
         current_best = best_by_track.get(box.track_id)
-        if current_best is None or _box_area(box) > _box_area(current_best):
-            best_by_track[box.track_id] = box
-        elif (
-            _box_area(box) == _box_area(current_best) and box.frame < current_best.frame
-        ):
+        if current_best is None or _selection_key(box) > _selection_key(current_best):
             best_by_track[box.track_id] = box
     return [best_by_track[track_id] for track_id in sorted(best_by_track)]
+
+
+def _selection_key(box: TrackedBox) -> tuple[float, float, int]:
+    """Sort key for picking a track's representative box: confidence, area, earliest."""
+    return (box.confidence, _box_area(box), -box.frame)
 
 
 def crop_window(
