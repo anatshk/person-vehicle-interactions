@@ -3,55 +3,13 @@
 from __future__ import annotations
 
 from person_vehicle_interactions.candidate_detection import Thresholds
-from person_vehicle_interactions.gt_windows import InteractionWindow
 from person_vehicle_interactions.threshold_fitting import (
     fit_thresholds,
     FitResult,
     threshold_grid,
 )
-from tests.factories import make_tracked_box
-
-
-def _clip_boxes_person_in_car(person_id=1, vehicle_id=2, frames=range(10, 21)):
-    """A person sitting fully inside a car across ``frames`` (overlap == 1.0)."""
-    boxes = []
-    for frame in frames:
-        boxes.append(
-            make_tracked_box(
-                frame=frame,
-                track_id=person_id,
-                object_class="person",
-                x1=10,
-                y1=10,
-                x2=20,
-                y2=20,
-            )
-        )
-        boxes.append(
-            make_tracked_box(
-                frame=frame,
-                track_id=vehicle_id,
-                object_class="car",
-                x1=0,
-                y1=0,
-                x2=100,
-                y2=100,
-            )
-        )
-    return boxes
-
-
-def _gt(start_frame, end_frame, clip_id="clipA"):
-    return InteractionWindow(
-        clip_id=clip_id,
-        interaction_id=1,
-        interaction_type="enter",
-        start_frame=start_frame,
-        end_frame=end_frame,
-        person="a person",
-        vehicle="a car",
-    )
-
+from tests.factories import make_interaction_gt as _gt
+from tests.factories import make_person_in_vehicle_boxes
 
 # --- threshold_grid -----------------------------------------------------------
 
@@ -82,7 +40,7 @@ def test_threshold_grid_is_cartesian_product():
 
 
 def test_fit_picks_thresholds_that_maximize_f1():
-    boxes_by_clip = {"clipA": _clip_boxes_person_in_car()}
+    boxes_by_clip = {"clipA": make_person_in_vehicle_boxes()}
     vehicle_classes_by_clip = {"clipA": {"car"}}
     gt_by_clip = {"clipA": [_gt(10, 20)]}
     good = Thresholds(min_overlap=0.05, max_distance=1.0, min_duration_frames=3)
@@ -99,7 +57,7 @@ def test_fit_picks_thresholds_that_maximize_f1():
 
 def test_fit_breaks_ties_by_grid_order():
     # Two thresholds that both detect the interaction perfectly -> first in grid wins.
-    boxes_by_clip = {"clipA": _clip_boxes_person_in_car()}
+    boxes_by_clip = {"clipA": make_person_in_vehicle_boxes()}
     vehicle_classes_by_clip = {"clipA": {"car"}}
     gt_by_clip = {"clipA": [_gt(10, 20)]}
     first = Thresholds(min_overlap=0.05, max_distance=1.0, min_duration_frames=2)
@@ -114,8 +72,8 @@ def test_fit_breaks_ties_by_grid_order():
 
 def test_fit_aggregates_over_multiple_clips():
     boxes_by_clip = {
-        "clipA": _clip_boxes_person_in_car(),
-        "clipB": _clip_boxes_person_in_car(frames=range(30, 41)),
+        "clipA": make_person_in_vehicle_boxes(),
+        "clipB": make_person_in_vehicle_boxes(frames=range(30, 41)),
     }
     vehicle_classes_by_clip = {"clipA": {"car"}, "clipB": {"car"}}
     gt_by_clip = {"clipA": [_gt(10, 20, "clipA")], "clipB": [_gt(30, 40, "clipB")]}

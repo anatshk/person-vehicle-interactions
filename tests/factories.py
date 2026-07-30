@@ -103,6 +103,28 @@ def make_pair_signal(
     )
 
 
+def make_person_in_vehicle_boxes(
+    frames: range = range(10, 21),
+    person_id: int = 1,
+    vehicle_id: int = 2,
+    person_confidence: float = 0.9,
+    vehicle_confidence: float = 0.8,
+) -> list[TrackedBox]:
+    """
+    Tracked boxes for a person sitting fully inside a vehicle across ``frames``.
+
+    The person box (10,10,20,20) is entirely within the vehicle box (0,0,100,100), so the
+    normalized overlap is 1.0 on every frame — a clean synthetic interaction.
+    """
+    boxes: list[TrackedBox] = []
+    for frame in frames:
+        boxes.append(make_person(frame, person_id, 10, 10, 20, 20, person_confidence))
+        boxes.append(
+            make_vehicle(frame, vehicle_id, 0, 0, 100, 100, vehicle_confidence)
+        )
+    return boxes
+
+
 def make_interaction_gt(
     start_frame: int,
     end_frame: int,
