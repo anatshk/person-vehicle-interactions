@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from person_vehicle_interactions.candidate_detection import PredictedWindow
+from person_vehicle_interactions.gt_windows import InteractionWindow
 from person_vehicle_interactions.interaction_signals import PairFrameSignal
 from person_vehicle_interactions.tracked_data_model import frame_to_seconds, TrackedBox
 
@@ -98,4 +100,40 @@ def make_pair_signal(
         distance=distance,
         person_confidence=person_confidence,
         vehicle_confidence=vehicle_confidence,
+    )
+
+
+def make_interaction_gt(
+    start_frame: int,
+    end_frame: int,
+    clip_id: str = "clipA",
+    interaction_id: int = 1,
+    interaction_type: str = "enter",
+    person: str = "a person",
+    vehicle: str = "a car",
+) -> InteractionWindow:
+    """Build a ground-truth InteractionWindow with sensible defaults for tests."""
+    return InteractionWindow(
+        clip_id=clip_id,
+        interaction_id=interaction_id,
+        interaction_type=interaction_type,
+        start_frame=start_frame,
+        end_frame=end_frame,
+        person=person,
+        vehicle=vehicle,
+    )
+
+
+def make_interaction_prediction(
+    start_frame: int,
+    end_frame: int,
+    person_id: int = 1,
+    vehicle_id: int = 2,
+) -> PredictedWindow:
+    """Build a predicted interaction window with sensible defaults for tests."""
+    return PredictedWindow(
+        person_id=person_id,
+        vehicle_id=vehicle_id,
+        start_frame=start_frame,
+        end_frame=end_frame,
     )
