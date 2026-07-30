@@ -18,6 +18,48 @@ Entry template:
 
 ---
 
+## 2026-07-30 — Session 8: overnight cache results + visualization tools
+
+**Results of overnight run:** PR #9 merged; `scripts/build_cache.py` ran over all 8 clips
+and populated the two-level cache (`cache/raw/*.jsonl` + `cache/tracks/*.csv` + meta) for
+every clip. Track-row counts per clip (a rough tracking-density sanity signal):
+
+| clip | track rows | note |
+|---|---|---|
+| gt1125_06 | 17,537 | 4K clip, dense — expected |
+| iMGR_0AG3a8_2_3 | 3,103 | |
+| 1THkHYIQ_bY_0 | 1,734 | |
+| mKzCQKTHizw_0 | 617 | |
+| NmlzoaDcOuI_6 | 584 | |
+| mKzCQKTHizw_1 | 342 | |
+| NmlzoaDcOuI_1 | 286 | |
+| HIu4lM4B8hA_1 | 47 | very sparse — flagged for eyeball check |
+
+**Adding visualization tools:** Track-inspection contact sheets over the cached tracks,
+to eyeball tracking quality before building P2 signals. Split pure/glue as usual:
+- **`track_selection.py`** (pure, unit-tested): `sample_track_boxes` (one track, every
+  `step`-th frame), `largest_box_per_track` (each track's max-area box, ties → earliest
+  frame), `crop_window` (fixed `fraction`·frame window around a center; corners may exceed
+  the frame — caller black-pads rather than shifting/shrinking).
+- **`visualization.py`** (glue, lazy cv2/matplotlib, integration smoke test): `show_objects`
+  (one tile per tracked object at its largest-box crop, labeled `id<n> <class>`) and
+  `show_track` (a single object over time in 0.25-frame crops with its box drawn). Sheets
+  are matplotlib grids (the Python equivalent of the ffmpeg contact sheets used for GT
+  frame-refinement). Output → `cache/viz/{objects,tracks}/`.
+
+Ran `show_objects` over all 8 clips. **Finding:** `HIu4lM4B8hA_1` yields only 2 tracked
+objects, both persons — **zero cars** (small-FOV low-res night clip), a detection gap to
+note for interaction detection. Object counts elsewhere look sane (e.g. 44 cars in the 4K
+`gt1125_06`).
+
+**Decisions:** `show_track` keeps the fixed 0.25-frame crop (context around the object,
+uniform tile size) over a tight-box-then-pad crop; `show_objects` draws no box (the
+largest-box crop *is* the object, so a border would add nothing).
+
+**Next:** pick specific track ids per clip → `show_track` sheets; cache sanity-check; P2.
+
+---
+
 ## 2026-07-29 — Session 7: pure cache modules
 
 **Narrative:** Added the pure half of the tracker/cache work — `config.DetectionConfig`,

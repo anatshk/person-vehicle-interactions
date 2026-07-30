@@ -62,6 +62,11 @@ description, and a vehicle description. Pass-by is not an interaction.
   - min **overlap** (normalized intersection) to count as contact;
   - max **proximity** (normalized distance) when boxes don't overlap;
   - min **duration** (frames/seconds) to reject momentary contacts / pass-bys.
+  - min **detection confidence** of the interacting person/car boxes — an additional
+    discriminator so a candidate resting on weak/uncertain detections is down-weighted or
+    rejected (e.g. require the interacting boxes to clear a confidence floor over the
+    window, or use mean/peak confidence as a signal alongside overlap/distance). The
+    `show_objects` sheets already surface per-object confidence, motivating this.
 - **Merge rule:** collapse same-person + same-vehicle engagements whose boxes never
   separate into one interaction (see GT merge rule).
 - **Hard negatives:** people passing in front of a car (box overlap, no interaction) —
