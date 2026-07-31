@@ -53,11 +53,17 @@ def normalize_argv(argv: list[str]) -> list[str]:
 def gather_inputs(path: Path, suffix: str) -> list[Path]:
     """
     Resolve an input path to the files to process: a folder's ``*suffix`` files (sorted) or
-    the single file itself. Raises ``FileNotFoundError`` if the path does not exist.
+    the single file itself.
+
+    Raises ``FileNotFoundError`` if the path does not exist and ``ValueError`` if a single
+    file has the wrong extension (e.g. a non-``.mp4`` video), so the CLI can exit gracefully
+    instead of failing deep inside detection.
     """
     if path.is_dir():
         return sorted(path.glob(f"*{suffix}"))
     if path.is_file():
+        if path.suffix.lower() != suffix:
+            raise ValueError(f"Expected a {suffix} file, got '{path.name}'")
         return [path]
     raise FileNotFoundError(f"No such file or directory: {path}")
 
@@ -204,7 +210,7 @@ def main(argv: list[str] | None = None) -> None:
     suffix = VIDEO_SUFFIX if args.command != "classify-tracks" else TRACKS_SUFFIX
     try:
         inputs = gather_inputs(args.path, suffix)
-    except FileNotFoundError as error:
+    except (FileNotFoundError, ValueError) as error:
         raise SystemExit(str(error))
     if not inputs:
         print(f"No {suffix} files found in {args.path}")

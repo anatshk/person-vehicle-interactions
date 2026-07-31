@@ -82,6 +82,13 @@ def test_gather_inputs_missing_path_raises(tmp_path):
         gather_inputs(tmp_path / "nope.mp4", ".mp4")
 
 
+def test_gather_inputs_rejects_wrong_extension_file(tmp_path):
+    not_mp4 = tmp_path / "clip.mov"
+    not_mp4.write_bytes(b"")
+    with pytest.raises(ValueError, match=".mp4"):
+        gather_inputs(not_mp4, ".mp4")
+
+
 def test_process_tracks_classify_copies_tracks_and_writes_under_per_clip_folder(
     tmp_path,
 ):
