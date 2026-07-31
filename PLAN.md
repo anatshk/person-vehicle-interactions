@@ -95,22 +95,26 @@ description, and a vehicle description. Pass-by is not an interaction.
 - Doubles as (a) a validation aid while tuning thresholds and (b) the assignment's
   optional annotated-frame deliverable.
 
-### Descriptions (YOLO-only)
+### Descriptions — dual local backend (DECIDED, session 11)
 
-- **YOLO does not caption** — it's a detector. Descriptions come from the **YOLO family
-  only**, fully local:
-  - base detector → class (person/car) + track id + bbox;
-  - **open-vocabulary YOLO-World / YOLOE** → attribute tags via local text prompts
-    (e.g. "red car", "person in white shirt") — deterministic, offline, no external service.
-- **Tradeoff (noted, not taken):** an **LLM API** could replace the local open-vocab
-  model for richer free-text descriptions. The tradeoff is **network connectivity + per-call
-  cost** (API) **vs. an extra local model + memory/compute** (open-vocab YOLO). We keep it
-  local for the submission — reproducible, offline, no cost or external dependency.
-- **Description as an extra FP filter.** Beyond producing the required person/vehicle
-  descriptions, ask the captioner/VLM a discriminating question — **"is the person physically
-  touching / entering the car, or just passing by?"** — and use the answer as an additional gate
-  to reject pass-by false positives that overlap/distance alone can't (e.g. a person crossing in
-  front of a car). Complements the geometric thresholds with appearance/contact cues.
+Two **selectable, fully-local** backends, chosen by a deliverable flag **`--detailed` vs
+`--fast`** (fast for realtime, detailed for accuracy). Crop I/O is isolated in `frame_crops.py`
+(`crop_for_box`); each model is loaded once and **injected** into its query function.
+- **`--detailed` → moondream2** (`vikhyatk/moondream2 @ 2025-06-21`, Apache-2.0, **transformers
+  4.x — not 5.x**; CPU without `device_map`/`accelerate`; `reasoning=False`): small local VLM,
+  **accurate** free-text (clothing/vehicle colour, type, brand, context). ~90s–5min/query on CPU
+  → run only on interaction participants, **dedup per `track_id`**, cached, offline. Module
+  `captioner.py` (`load_captioner`, `query_frame(model, frame, prompt)`).
+- **`--fast` → open-vocab YOLO-World v2-L** (`yolov8l-worldv2.pt`): ~0.2s/frame attribute tags
+  from a designed vocabulary; **reliable object type**, attribute-weak (colour/gender) on low-res
+  CCTV. Module `attribute_tagger.py` (`load_tagger`, `tag_image`).
+- **Tradeoff (noted, not taken):** an **LLM API** for richer descriptions — network + per-call
+  cost vs. a local model; we stay local (reproducible, offline). moondream2 weights (~3.7 GB) are
+  an auto-downloaded external asset — document in the README, like `yolo11l.pt`.
+- **VLM as an extra FP filter — VALIDATED (session 11).** Ask moondream on the union(person,
+  vehicle) crop **"is the person interacting or just passing by?"** and gate pass-by FPs.
+  Confirmed: `NmlzoaDcOuI_1` p66 passer-by → "passing by" (all 3 frames); a real interaction →
+  "interacting". Complements the geometric thresholds; opt-in (slow).
 
 ## Determinism & reproducibility
 
