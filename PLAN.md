@@ -74,7 +74,10 @@ description, and a vehicle description. Pass-by is not an interaction.
     window, or use mean/peak confidence as a signal alongside overlap/distance). The
     `show_objects` sheets already surface per-object confidence, motivating this.
 - **Merge rule:** collapse same-person + same-vehicle engagements whose boxes never
-  separate into one interaction (see GT merge rule).
+  separate into one interaction (see GT merge rule). Beyond geometry, the **descriptions can
+  serve as the merge key** — unify fragmented tracks (person ID switches / re-detections) into
+  one interaction when person + vehicle descriptions + location match across temporally adjacent
+  fragments (see the description-as-merge-key idea for the `gt1125_06` continuation).
 - **Hard negatives:** people passing in front of a car (box overlap, no interaction) —
   `NmlzoaDcOuI_1` — must be rejected by the duration/overlap thresholds.
 
@@ -103,6 +106,11 @@ description, and a vehicle description. Pass-by is not an interaction.
   model for richer free-text descriptions. The tradeoff is **network connectivity + per-call
   cost** (API) **vs. an extra local model + memory/compute** (open-vocab YOLO). We keep it
   local for the submission — reproducible, offline, no cost or external dependency.
+- **Description as an extra FP filter.** Beyond producing the required person/vehicle
+  descriptions, ask the captioner/VLM a discriminating question — **"is the person physically
+  touching / entering the car, or just passing by?"** — and use the answer as an additional gate
+  to reject pass-by false positives that overlap/distance alone can't (e.g. a person crossing in
+  front of a car). Complements the geometric thresholds with appearance/contact cues.
 
 ## Determinism & reproducibility
 
