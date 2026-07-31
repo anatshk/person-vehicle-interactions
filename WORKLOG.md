@@ -18,6 +18,49 @@ Entry template:
 
 ---
 
+## 2026-07-31 — Session 12: descriptions backend chosen + external clip run
+
+**Narrative:** Selected the description backend by benchmarking on real crops. Built isolated,
+model-injected modules: `frame_crops.py` (`read_frame`/`crop_box`/`crop_for_box`, unit-tested),
+`attribute_tagger.py` (YOLO-World `load_tagger`/`tag_image`), and reused `captioner.py`
+(moondream2 `load_captioner`/`query_frame`). Verified live that **moondream2 @ 2025-06-21 needs
+transformers 4.x** (5.x's `all_tied_weights_keys` breaks its trust-remote-code modeling) and
+loads on CPU **without `device_map`/`accelerate`**. Side-by-side on identical crops: **moondream
+is far more accurate** (clothing/vehicle colour, type, even brand + context) where YOLO-World v2-L
+gives systematically wrong colours; YOLO-World is ~500× faster (~0.2s vs ~90s–5min/query) but
+attribute-weak on low-res CCTV. Downsampled the external phone clip (1080p portrait → 720×720p
+12 fps, 126 MB → 5.85 MB) and ran the full pipeline → **14 candidate interactions** (GT from user:
+4 people exiting one dark car), surfacing pass-by FPs + fragmentation.
+
+**Decisions:** **Dual, flag-selectable description backend — `--detailed` (moondream2) vs `--fast`
+(YOLO-World v2-L)**; fast for realtime, detailed for accuracy; moondream run only on interaction
+participants, **dedup per track**, cached, offline. **Moondream FP-filter VALIDATED** — on the
+union(person,vehicle) crop it labelled the `NmlzoaDcOuI_1` p66 passer-by "passing by" (all frames)
+and a real interaction "interacting". moondream weights (~3.7 GB) documented as an auto-downloaded
+external asset. Moondream PR #36 was closed then un-shelved (decision reversed).
+
+**Next:** wire `describe_window` behind the flag (crop → backend → cache per track); sort PR
+structure (reuse PR #36 captioner + commit the new modules); render the external clip's sheets.
+
+## 2026-07-31 — Session 11: deliverable CLI + shipped-vs-LOSO threshold comparison
+
+**Narrative:** Turned the results glue into the actual **deliverable CLI**
+`scripts/detect_interactions.py` (PR #34): full pipeline by default (video → detect+track →
+classify), staged subcommands `detect-and-track` / `classify-tracks`, single file **or folder**,
+**per-clip output folder** `<results-dir>/<clip_id>/` (tracks + results together; classify-tracks
+copies the source tracks in), per-clip error-continue, and a graceful non-`.mp4` exit. Demoted
+`build_results.py` to the classify-stage library and moved the pinned `SHIPPED_THRESHOLDS`
+(fit-on-all) into `config.py`. Added `scripts/compare_thresholds.py` (PR #35, stacked) reporting
+per-scene/overall P/R/F1 under **LOSO fold** (honest) vs **shipped** (in-sample) thresholds plus
+the threshold-field diffs.
+
+**Decisions:** the shipped deliverable uses **one fixed fit-on-all threshold set** and is
+**LOSO-unaware** (`--loso` removed). Comparison finding: **5/6 LOSO folds are identical to the
+shipped set**; only `cctv_night` differs (`min_confidence` 0.0 vs 0.3), where the shipped floor
+drops one FP. Combined `results.json` + folder/robustness hardening deferred to final cleanup.
+
+**Next:** real descriptions (→ Session 12).
+
 ## 2026-07-30 — Session 10: output layer + interaction contact sheets
 
 **Narrative:** Built the output/inspection layer over the tuned detector (PRs #27–#31):
