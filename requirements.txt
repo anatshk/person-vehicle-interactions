@@ -7,3 +7,15 @@ opencv-python==5.0.0.93
 numpy==2.5.1
 pandas==3.0.5
 matplotlib==3.11.1
+
+# --- Descriptions captioner (moondream2) — pins finalized after a live CPU load ---
+# Local VLM for person/vehicle descriptions: vikhyatk/moondream2 @ 2025-06-21 (Apache-2.0);
+# weights auto-downloaded (~3.7GB) on first use, like yolo11l.pt. moondream's own pinned
+# deps (einops, pyvips, pyvips-binary — pyvips-binary bundles libvips, no system package)
+# plus transformers. Left commented until the exact transformers pin is verified against a
+# real load (person_vehicle_interactions/captioner.py imports these lazily, so the rest of
+# the pipeline and the tests run without them).
+# transformers==<verified>
+# einops==0.8.1
+# pyvips==2.2.3
+# pyvips-binary==8.16.0
