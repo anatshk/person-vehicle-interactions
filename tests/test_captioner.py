@@ -17,8 +17,9 @@ class _FakeModel:
         self.answer = answer
         self.seen: tuple[Any, str] | None = None
 
-    def query(self, image: Any, prompt: str) -> dict[str, str]:
+    def query(self, image: Any, prompt: str, reasoning: bool = False) -> dict[str, str]:
         self.seen = (image, prompt)
+        self.reasoning = reasoning
         return {"answer": self.answer}
 
 
@@ -33,6 +34,7 @@ def test_query_frame_passes_prompt_and_returns_stripped_answer():
     image, prompt = model.seen
     assert prompt == "Describe the vehicle."
     assert isinstance(image, Image.Image)
+    assert model.reasoning is False  # short answer, no chain-of-thought
 
 
 def test_query_frame_converts_bgr_numpy_to_rgb():

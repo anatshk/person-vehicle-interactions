@@ -8,14 +8,14 @@ numpy==2.5.1
 pandas==3.0.5
 matplotlib==3.11.1
 
-# --- Descriptions captioner (moondream2) — pins finalized after a live CPU load ---
-# Local VLM for person/vehicle descriptions: vikhyatk/moondream2 @ 2025-06-21 (Apache-2.0);
-# weights auto-downloaded (~3.7GB) on first use, like yolo11l.pt. moondream's own pinned
-# deps (einops, pyvips, pyvips-binary — pyvips-binary bundles libvips, no system package)
-# plus transformers. Left commented until the exact transformers pin is verified against a
-# real load (person_vehicle_interactions/captioner.py imports these lazily, so the rest of
-# the pipeline and the tests run without them).
-# transformers==<verified>
-# einops==0.8.1
-# pyvips==2.2.3
-# pyvips-binary==8.16.0
+# --- Descriptions captioner (moondream2 @ 2025-06-21, Apache-2.0) ---
+# Local VLM for person/vehicle descriptions; weights (~3.7GB) auto-downloaded on first use
+# like yolo11l.pt (document in README). Verified against a live CPU load. Requires
+# transformers 4.x — moondream's modeling code uses the 4.x tied-weights API, so transformers
+# 5.x fails to load it. pyvips-binary bundles libvips (no system package needed). No
+# `accelerate`: we load on CPU without device_map. captioner.py imports these lazily, so the
+# rest of the pipeline and the tests still run if they are absent.
+transformers==4.57.6
+einops==0.8.2
+pyvips==3.1.1
+pyvips-binary==8.18.4
