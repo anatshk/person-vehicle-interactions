@@ -5,6 +5,8 @@ from __future__ import annotations
 import dataclasses
 from pathlib import Path
 
+from person_vehicle_interactions.candidate_detection import Thresholds
+
 VIDEOS_DIR = Path("Videos")
 CACHE_DIR = Path("cache")
 RAW_DIR = CACHE_DIR / "raw"
@@ -70,3 +72,16 @@ class DetectionConfig:
     # ``target_class_ids_for_clip`` to add clip-specific vehicle classes.
     target_class_ids: tuple[int, ...] | None = (PERSON_CLASS_ID,) + VEHICLE_CLASS_IDS
     seed: int = 0
+
+
+# The single fixed interaction thresholds shipped with the deliverable: fit on ALL clips
+# (not per LOSO fold), so a run is reproducible and applies to clips without ground truth.
+# LOSO is a research-only concern; the deliverable never sees it. Kept in sync with
+# ``fit(all_clips())`` by ``test_shipped_thresholds_match_fit_on_all``.
+SHIPPED_THRESHOLDS = Thresholds(
+    min_overlap=0.2,
+    max_distance=0.0,
+    min_duration_frames=10,
+    min_confidence=0.3,
+    max_gap_frames=15,
+)
