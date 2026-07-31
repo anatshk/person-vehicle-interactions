@@ -23,6 +23,7 @@ from collections.abc import Callable
 import dataclasses
 import functools
 from pathlib import Path
+import shutil
 import sys
 
 from person_vehicle_interactions.config import (
@@ -105,16 +106,33 @@ def process_video_detect(
     return _detect_and_track(video_path, clip_dir, force)
 
 
+def _copy_tracks_into(tracks_path: Path, clip_dir: Path) -> None:
+    """
+    Copy a clip's tracks csv + metadata into ``clip_dir`` (created if needed).
+    A no-op for a file already in ``clip_dir``, so re-classifying in place is safe.
+    """
+    clip_dir.mkdir(parents=True, exist_ok=True)
+    for source in (tracks_path, tracks_path.with_suffix(".meta.json")):
+        if source.exists() and source.parent != clip_dir:
+            shutil.copy2(source, clip_dir / source.name)
+
+
 def process_tracks_classify(
     tracks_path: Path, results_dir: Path = RESULTS_DIR, generated_at=None
 ) -> Path:
-    """Classify one cached tracks file into its per-clip folder. Returns the results JSON."""
+    """
+    Classify one cached tracks file into its per-clip folder. Returns the results JSON.
+    The source tracks (csv + metadata) are copied into the folder so it holds the same
+    tracks-plus-results bundle the full pipeline produces.
+    """
     clip_id = tracks_path.stem
+    clip_dir = Path(results_dir) / clip_id
+    _copy_tracks_into(tracks_path, clip_dir)
     return build_clip_results(
         clip_id,
         SHIPPED_THRESHOLDS,
-        tracks_dir=tracks_path.parent,
-        results_dir=Path(results_dir) / clip_id,
+        tracks_dir=clip_dir,
+        results_dir=clip_dir,
         generated_at=generated_at,
     )
 

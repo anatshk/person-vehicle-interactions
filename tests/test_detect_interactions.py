@@ -82,7 +82,9 @@ def test_gather_inputs_missing_path_raises(tmp_path):
         gather_inputs(tmp_path / "nope.mp4", ".mp4")
 
 
-def test_process_tracks_classify_writes_under_per_clip_folder(tmp_path):
+def test_process_tracks_classify_copies_tracks_and_writes_under_per_clip_folder(
+    tmp_path,
+):
     clip_id = "myclip"
     tracks_path = _write_synthetic_tracks(tmp_path / "tracks", clip_id)
     results_dir = tmp_path / "out"
@@ -91,11 +93,27 @@ def test_process_tracks_classify_writes_under_per_clip_folder(tmp_path):
         tracks_path, results_dir=results_dir, generated_at=GENERATED_AT
     )
 
-    assert path.parent == results_dir / clip_id
+    clip_dir = results_dir / clip_id
+    assert path.parent == clip_dir
+    assert (clip_dir / f"{clip_id}.csv").exists()
+    assert (clip_dir / f"{clip_id}.meta.json").exists()
     records = load_clip_records(path)
     assert len(records) == 1
     assert records[0].clip_id == clip_id
     assert records[0].person == "person (track 1)"
+
+
+def test_process_tracks_classify_is_safe_when_tracks_already_in_place(tmp_path):
+    clip_id = "inplace"
+    results_dir = tmp_path / "out"
+    tracks_path = _write_synthetic_tracks(results_dir / clip_id, clip_id)
+
+    path = process_tracks_classify(
+        tracks_path, results_dir=results_dir, generated_at=GENERATED_AT
+    )
+
+    assert path.parent == results_dir / clip_id
+    assert len(load_clip_records(path)) == 1
 
 
 def test_process_video_full_detects_then_classifies(tmp_path, monkeypatch):
