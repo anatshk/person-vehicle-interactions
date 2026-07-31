@@ -6,7 +6,7 @@ import datetime
 
 import pytest
 
-from person_vehicle_interactions.config import TRACKS_DIR
+from person_vehicle_interactions.config import SHIPPED_THRESHOLDS, TRACKS_DIR
 from person_vehicle_interactions.interaction_records import load_clip_records
 from person_vehicle_interactions.loso import all_clips
 from person_vehicle_interactions.tracked_data_model import (
@@ -14,11 +14,7 @@ from person_vehicle_interactions.tracked_data_model import (
     save_metadata,
     save_tracks,
 )
-from scripts.build_results import (
-    build_clip_results,
-    make_placeholder_describe_window,
-    SHIPPED_THRESHOLDS,
-)
+from scripts.build_results import build_clip_results, make_placeholder_describe_window
 from tests.factories import make_interaction_prediction, make_person_in_vehicle_boxes
 
 CLIP_ID = "results_clip"
