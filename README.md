@@ -6,10 +6,10 @@ Detailed description in the write-up file.
 ## Deliverables
 - Code - this is the repository - [https://github.com/anatshk/person-vehicle-interactions](https://github.com/anatshk/person-vehicle-interactions)
 - Outputs - in the repo, under the [outputs](https://github.com/anatshk/person-vehicle-interactions/tree/main/outputs) folder. Each clip has a folder that contains:
-  - CSV file - these are the cached detections that allow us to skip the long-running detect-track step.
-  - meta.json file - properties of the video along with detect-track parameters used.
-  - interactions_fast.json file - required results, descriptions made by a fast but unreliable model
-  - interactions_detailed.json file - same as above, however the model provides reliable descriptions at a significantly longer runtime cost.
+  - `<clip_id>.csv` file - these are the cached detections that allow us to skip the long-running detect-track step.
+  - `<clip_id>.meta.json` file - properties of the video along with detect-track parameters used.
+  - `<clip_id>_interactions_fast_<YYYYMMDDHHMM>.json` - required results, descriptions made by a fast but unreliable model.
+  - `<clip_id>_interactions_detailed_<YYYYMMDDHHMM>.json` - same as above, however the model provides reliable descriptions at a significantly longer runtime cost.
 - Visualizations -
   - [`outputs/sheets`](https://github.com/anatshk/person-vehicle-interactions/tree/main/outputs/sheets) contains images of the interactions found per clip.
   - [`docs/images`](https://github.com/anatshk/person-vehicle-interactions/tree/main/docs/images) has a few examples used in [WRITE_UP.md](WRITE_UP.md)
@@ -53,9 +53,11 @@ pip install -r requirements.txt
 
 External model weights download automatically on first use (no manual step):
 
-- `yolo11l.pt` — the detector.
-- `yolov8s-world.pt` — YOLO-World, for the fast (`--fast`) descriptions.
-- `moondream2` (@ 2025-06-21, ~3.7 GB) — for the detailed (`--detailed`) descriptions.
+- `yolo11l.pt` — the detector. Ultralytics (**AGPL-3.0**; commercial use needs a license).
+- `yolov8s-world.pt` — YOLO-World, for the fast (`--fast`) descriptions. Ultralytics (**AGPL-3.0**).
+- `moondream2` (@ 2025-06-21, ~3.7 GB) — for the detailed (`--detailed`) descriptions (**Apache-2.0**).
+
+No external services or network APIs are used at inference time — everything runs locally.
 
 ### Run Instructions
 
@@ -115,6 +117,23 @@ other slow part (the VLM runs ~minutes per crop). A per-stage timing table + ana
 
 Per-clip results are committed under [`outputs/`](outputs/) (one folder per clip). Running
 the pipeline yourself also writes them to the git-ignored `cache/results/<clip_id>/`.
+
+The committed outputs hold **15 interactions across the 8 clips** (both `--fast` and
+`--detailed` produce the same windows; only the descriptions differ):
+
+| clip | interactions |
+|---|---|
+| `1THkHYIQ_bY_0` | 2 |
+| `gt1125_06` | 5 |
+| `HIu4lM4B8hA_1` | 0 (expected — see the CCTV detection-recall limitation in the write-up) |
+| `iMGR_0AG3a8_2_3` | 1 |
+| `mKzCQKTHizw_0` | 2 |
+| `mKzCQKTHizw_1` | 1 |
+| `NmlzoaDcOuI_1` | 3 |
+| `NmlzoaDcOuI_6` | 1 |
+
+These are produced with the single shipped threshold set (`config.SHIPPED_THRESHOLDS`); the
+precision/recall figures in the write-up come from a separate leakage-free LOSO evaluation.
 
 Each clip writes a timestamped JSON, `<clip_id>_interactions_<YYYYMMDDHHMM>.json`. Example
 (`NmlzoaDcOuI_6`, run with `--detailed`):
