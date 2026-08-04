@@ -30,6 +30,8 @@ I reviewed all the clips and other images myself.
 2. Going over all of the relevant objects detected in each clip, noting where tracking broke down. (see [ground_truth/tracking_notes.md](ground_truth/tracking_notes.md))
 3. Fine-tuning the GT - asked Claude to show me frames around the start/end of the GT I indicated before, selected exact frames for interaction start/end.
 
+I also recorded the **scope decisions** in the GT file: interaction *types* are enter / exit / other (with `other` reportable behind a flag; default broad); a "vehicle" is the COCO `car` class only (every interaction here is with a car); and a *merge rule* treats consecutive engagements by the same person with the same vehicle whose boxes never separate as a single interaction.
+
 ## Pipeline Description
 
 After going over the videos and describing them, I defined the work plan.
@@ -41,7 +43,7 @@ I have worked with these models in the past and feel that their framework is eas
 
 Claude suggested using the built-in tracking option with **BoT-SORT** tracker, as it has compensation for camera motion --> I accepted the suggestion.
 
-There were several discussions on how to save the tracking outputs, I tried to keep it simple (JSON as opposed to Claude suggesting parquet) and defined the output format.
+There were several discussions on how to save the tracking outputs; I tried to keep it simple (**CSV** for the per-frame tracks, plus a JSON metadata sidecar and a JSONL raw-detection cache — as opposed to Claude suggesting parquet) and defined the output format.
 
 Claude wrote the code for the detection and tracking, and ran it over all the videos.
 
@@ -54,12 +56,11 @@ Example - in the low quality CCTV video (`HIu4lM4B8hA_1`, low-res grayscale nigh
 As a workaround, I made sure that "truck" and "bus" are added to "car" as the default vehicle class.
 For the specific video, I added an override that allows "boat" be counted as a vehicle for this video alone, along with a TODO that in the future this workaround should use the video properties to select the "low-quality-so-expand-definition-of-vehicle" route instead of hard-coding by video name.
 
-In the same video, the man stealing the vehicle is not detected at all.
+In the same video, the man stealing the vehicle is barely detected - only fleetingly (a couple of frames), and not at all through the actual entry.
 In another video (`iMGR_0AG3a8_2_3`, the indoor parking garage) - a woman exiting a car is not detcted at all.
 
 The YOLO model was probably **NOT** trained on CCTV videos, at least not exclusively.
-In the future, it may be beneficial to use models specifically trained on CCTV footage (or any other footage that the customers provide) to improve detection.
-(<TODO> in the future improvements section below, make sure to include "improve detection by fine-tuning models" - look at our plan and todos in the code to collect info on that).
+In the future, it may be beneficial to fine-tune / use models specifically trained on CCTV footage (or any other footage the customers provide) to improve detection (see Future Improvements below).
 
 Additionally, I'm no expert on tracking, but there are many tracking modules (or even video-ingesting models) to choose from, so this is another possible future optimization.
 
@@ -70,35 +71,49 @@ Programatically - it must have the person and vehicle bounding boxes in close pr
 It also required the model to be confident in the object detection
 I defined several parameters that may indicate an interaction and asked Claude to extract those per clip.
 
-The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area — the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates — a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. <TODO> embed an example graph.
+The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area — the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates — a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. For example, the woman entering the gray car in `mKzCQKTHizw_0` (person 45 × vehicle 49): the normalized overlap climbs toward ~1.0 right over the GT interaction window (shaded), while the normalized distance drops — the separation the thresholds key on.
+
+![Signals vs GT for an entering person](docs/images/example_signal_plot.png)
 
 Next, I ran a LOSO (leave-one-scene-out) to find the thresholds per-fold. This showed the approach had merit.
 I fit a set of global thresholds on all clips together - these are the thresholds set in config ([`config.SHIPPED_THRESHOLDS`](person_vehicle_interactions/config.py)): `min_overlap=0.2`, `max_distance=0.0`, `min_duration_frames=10`, `min_confidence=0.3`, `max_gap_frames=15`.
 
 I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds.
 
+The pipeline reports interaction **candidates** (the person↔vehicle contact window); classifying each as enter / exit / other was scoped out - the brief only asks to *list* interactions - though the GT annotates the type, so it is a natural next step.
+
 ## Analyzing the Interactions + Descriptions
 
-Most interactions were detected correctly (<TODO> is that true? compare detected interactions with GT, note split interactions).
+On the ground truth, the pipeline finds most real interactions: leave-one-scene-out (leakage-free) gives overall **precision 0.62 / recall 0.77 / F1 0.69** (10 TP, 6 FP, 3 FN across the 6 scenes). The recall miss is mostly the two detection failures noted above; the false positives are mostly **split interactions** (one real interaction fragmented across track-ID switches) plus a couple of hard pass-bys.
 
 Going over the interactions highlighted the broken tracking - same interaction was split into several sections.
 My idea was to use the Description section to help filtering FPs and unifying segmented interactions.
 My assumption was that same person + same vehicle, in a given time range = same interaction, despite tracking issues, and that if the descriptions are detailed enough they may indicate "person walking past a car" or "person getting into a car", or even just answer a yes/no question of "is there a person touching a car in this image".
 
-I tasked Claude to find suitable models for image descriptios. We started from YOLO-World, which did not deliver, as it could not identify car or clothes colors, not to mention genders. I asked to switch to a captioner model, Claude suggested `moondream2` from HuggingFace, which showed promise, but was very slow on CPU - more than a minute per image (per crop; descriptions are deduplicated per track, so each unique person/vehicle is described once, not once per interaction).
+I tasked Claude to find suitable models for image descriptios. We started from YOLO-World, whose attributes proved unreliable - it does emit colors and gender guesses, but they are frequently wrong (it labelled a man in a green shirt as "a woman" and a red sedan as "a red SUV"); it is more dependable on object *type* (sedan/SUV/truck). I asked to switch to a captioner model, Claude suggested `moondream2` from HuggingFace, which showed promise (it described that same clip as "Male, wearing green" and "Red four-door sedan" - matching the GT), but was very slow on CPU - more than a minute per image (per crop; descriptions are deduplicated per track, so each unique person/vehicle is described once, not once per interaction).
 
 For this task, I created 2 options for descriptions - one `--fast` using YOLO-World, just for the feeling of sane runtime and `--detailed` where `moondream2` was used, for usable descriptions.
 
 I decided not to filter out FPs (for example, a woman walking in front of a car and not interacting with it in video `NmlzoaDcOuI_1`, which `moondream2` correctly described as "passing by" when asked, on the union crop of the person + vehicle boxes, whether she was interacting or just passing by).
 I also decided not to unify split interactions at this time, as YOLO-world cannot be depended on and `moondream2` is too slow.
 
+## Limitations
+
+- **Single-camera ambiguity / identity-blind scoring:** a person passing *in front of* a parked car overlaps its box and can be scored as an interaction (the `NmlzoaDcOuI_1` passer-by). Evaluation also matches predictions to GT by temporal overlap, not identity, so it can mislabel in either direction.
+- **Broken tracking → fragmentation:** ID switches split one real interaction into several windows (the aerial `gt1125_06` driver; the external phone clip), which is the main source of false positives.
+- **Static occupant:** a person already seated inside a car has sustained box overlap with no mount/dismount, so overlap alone can mistake them for someone entering.
+- **CCTV detection recall:** low-res / grayscale clips miss people and misclassify cars (the `boat` case), capping recall regardless of the interaction logic.
+
+## Reproducibility
+
+Models and seeds are pinned and CPU inference is deterministic; the detection **tracks** and the **results** are committed under `outputs/`, so a reviewer can reproduce the classify + description stage (and the contact sheets) without re-running the ~73-minute detection.
+
 # Future Improvements
-<TODO> make sure all future improvements listed above are summarized in the section below.
 
 1. Detection / tracking
     a. Detection model trained on CCTV and other suitable footage
     b. Better tracking module
-    c. A video-ingester model that does tracking at the same time as detection <TODO> any suggestions for such models?
+    c. A video-native model that detects + tracks jointly (e.g. transformer trackers such as MOTR / TrackFormer, or open-vocabulary video models) instead of per-frame detection + a separate tracker.
 2. Definition of Interaction 
     a. Is a person removing a car cover considered an interaction? 
     b. Tuning / replacing selected interaction parameters based on more data
