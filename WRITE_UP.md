@@ -99,10 +99,20 @@ I also decided not to unify split interactions at this time, as YOLO-world canno
 
 ## Limitations
 
-- **Single-camera ambiguity / identity-blind scoring:** a person passing *in front of* a parked car overlaps its box and can be scored as an interaction (the `NmlzoaDcOuI_1` passer-by). Evaluation also matches predictions to GT by temporal overlap, not identity, so it can mislabel in either direction.
-- **Broken tracking → fragmentation:** ID switches split one real interaction into several windows (the aerial `gt1125_06` driver; the external phone clip), which is the main source of false positives.
-- **Static occupant:** a person already seated inside a car has sustained box overlap with no mount/dismount, so overlap alone can mistake them for someone entering.
-- **CCTV detection recall:** low-res / grayscale clips miss people and misclassify cars (the `boat` case), capping recall regardless of the interaction logic.
+- **Single-camera ambiguity / identity-blind scoring:** a person passing *in front of* a parked car overlaps its box and can be scored as an interaction (the `NmlzoaDcOuI_1` passer-by, below). Evaluation also matches predictions to GT by temporal overlap, not identity, so it can mislabel in either direction.
+
+  ![passer-by false positive](docs/images/limitation_passerby.jpg)
+
+- **Broken tracking → fragmentation:** ID switches split one real interaction into several windows (the aerial `gt1125_06` driver, below), which is the main source of false positives. The same driver on the same car `v5` is tracked as `p18` and then re-identified as `p111`:
+
+  ![driver as p18](docs/images/limitation_fragmentation_a.jpg)
+  ![same driver re-ID'd as p111](docs/images/limitation_fragmentation_b.jpg)
+
+- **Static occupant:** a person already seated inside a car has sustained box overlap with no mount/dismount, so overlap alone can mistake them for someone entering (`mKzCQKTHizw_0` `p51`, seated in `v49`):
+
+  ![static occupant](docs/images/limitation_static_occupant.jpg)
+
+- **CCTV detection recall:** low-res / grayscale clips (`HIu4lM4B8hA_1`) miss people and misclassify cars (the `boat` case), capping recall regardless of the interaction logic.
 
 ## Reproducibility
 
