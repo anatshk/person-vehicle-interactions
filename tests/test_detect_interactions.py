@@ -123,6 +123,91 @@ def test_process_tracks_classify_is_safe_when_tracks_already_in_place(tmp_path):
     assert len(load_clip_records(path)) == 1
 
 
+def test_process_tracks_classify_describes_from_auto_found_video(tmp_path, monkeypatch):
+    clip_id = "cachedclip"
+    tracks_path = _write_synthetic_tracks(tmp_path / "tracks", clip_id)
+    videos_dir = tmp_path / "videos"
+    videos_dir.mkdir()
+    (videos_dir / f"{clip_id}.mp4").write_bytes(b"")
+    # Skip real video I/O: the crop is irrelevant to the injected describer.
+    monkeypatch.setattr("scripts.build_results.crop_for_box", lambda *a, **k: object())
+
+    def describer(crop, kind):
+        return f"a {kind} (described)"
+
+    path = process_tracks_classify(
+        tracks_path,
+        results_dir=tmp_path / "out",
+        generated_at=GENERATED_AT,
+        describer=describer,
+        method="fast",
+        videos_dir=videos_dir,
+    )
+
+    assert "fast" in path.name
+    record = load_clip_records(path)[0]
+    assert record.person == "a person (described)"
+    assert record.vehicle == "a vehicle (described)"
+
+
+def test_process_tracks_classify_uses_explicit_video_override(tmp_path, monkeypatch):
+    clip_id = "cachedclip"
+    tracks_path = _write_synthetic_tracks(tmp_path / "tracks", clip_id)
+    video = tmp_path / "elsewhere" / "renamed.mp4"
+    video.parent.mkdir()
+    video.write_bytes(b"")
+    monkeypatch.setattr("scripts.build_results.crop_for_box", lambda *a, **k: object())
+
+    path = process_tracks_classify(
+        tracks_path,
+        results_dir=tmp_path / "out",
+        generated_at=GENERATED_AT,
+        describer=lambda crop, kind: f"a {kind} (described)",
+        method="fast",
+        video=video,
+    )
+
+    assert load_clip_records(path)[0].person == "a person (described)"
+
+
+def test_process_tracks_classify_falls_back_to_placeholder_without_video(
+    tmp_path, capsys
+):
+    clip_id = "novideo"
+    tracks_path = _write_synthetic_tracks(tmp_path / "tracks", clip_id)
+
+    path = process_tracks_classify(
+        tracks_path,
+        results_dir=tmp_path / "out",
+        generated_at=GENERATED_AT,
+        describer=lambda crop, kind: f"a {kind} (described)",
+        method="fast",
+        videos_dir=tmp_path / "empty",
+    )
+
+    assert "placeholder" in path.name
+    assert load_clip_records(path)[0].person == "person (track 1)"
+    assert "warning" in capsys.readouterr().out.lower()
+
+
+def test_classify_parser_backend_and_video_options():
+    parser = detect_interactions._build_parser()
+    assert parser.parse_args(["classify-tracks", "t.csv"]).backend == "fast"
+    assert (
+        parser.parse_args(["classify-tracks", "t.csv", "--detailed"]).backend
+        == "detailed"
+    )
+    assert (
+        parser.parse_args(["classify-tracks", "t.csv", "--placeholder"]).backend
+        == "placeholder"
+    )
+    args = parser.parse_args(
+        ["classify-tracks", "t.csv", "--videos-dir", "V", "--video", "v.mp4"]
+    )
+    assert args.videos_dir == Path("V")
+    assert args.video == Path("v.mp4")
+
+
 def test_process_video_full_detects_then_classifies(tmp_path, monkeypatch):
     clip_id = "phoneclip"
 

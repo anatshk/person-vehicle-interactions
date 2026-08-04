@@ -100,6 +100,12 @@ python -m scripts.detect_interactions detect-and-track <video|folder>  # video -
 python -m scripts.detect_interactions classify-tracks <tracks|folder>  # tracks -> results
 ```
 
+`classify-tracks` takes the same `--fast` (default) / `--detailed` description backends as the
+full run, so you can regenerate real descriptions from the committed `outputs/` tracks without
+re-running detection. It finds each clip's video at `Videos/<clip>.mp4` (override with
+`--videos-dir` / `--video`); add `--placeholder` to stay fully offline (no video, model-free
+labels).
+
 Runtimes (CPU): detection + tracking dominates (per-frame inference at `imgsz=1280`) — the
 4K aerial clip is by far the slowest, the small CCTV clips are quick. `--detailed` is the
 other slow part (the VLM runs ~minutes per crop). A per-stage timing table + analysis is in
