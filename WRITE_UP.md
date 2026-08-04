@@ -31,22 +31,31 @@ I reviewed all the clips and other images myself.
 
 I also recorded the **scope decisions** in the GT file: interaction *types* are enter / exit / other (with `other` reportable behind a flag; default broad); a "vehicle" is the COCO `car` class only (every interaction here is with a car); and a *merge rule* treats consecutive engagements by the same person with the same vehicle whose boxes never separate as a single interaction.
 
+The 8 clips are deliberately varied, which is what makes the task hard: fixed CCTV, 4K aerial/drone, PTZ/moving, and indoor-ceiling cameras; night and day; resolutions from 4K down to 352×288; plus jump-cuts, occlusions, truncated events, a driver swap, concurrent interactions on one car, and pass-by hard negatives. Two pairs share a scene (`mKzCQKTHizw_0`/`_1`, same scene different angle; `NmlzoaDcOuI_1`/`_6`, same camera different car), so the evaluation groups them into **6 scene units** and the LOSO folds hold out a whole scene at a time - tuning never sees a sibling angle of the clip it is scored on (no leakage).
+
 ## Pipeline Description
+
+The first architectural decision was **classic detect → track → reason vs. an end-to-end
+video/VLM model**. I chose the classic pipeline deliberately: it is deterministic and
+reproducible (the brief's explicit priority), each stage is inspectable and cacheable, and it
+degrades gracefully - a description model can be swapped or dropped without touching the
+detection logic. An end-to-end learned interaction model is noted as a separate future direction
+(see Future Improvements), but it needs large amounts of labeled data and is far less transparent.
 
 After going over the videos and describing them, I defined the work plan.
 
 ### Detection and Tracking
 I have chosen to use a pre-trained model, Ultralytics' YOLO11, for object detections.
 I have worked with these models in the past and feel that their framework is easy and flexible enough for many tasks.
-(NOTE: Ultralytics is AGPL-3.0, so a license is required for commercial use; this also covers the YOLO-World model used for the `--fast` descriptions. The `--detailed` captioner, `moondream2`, is Apache-2.0. Everything runs locally — no external services or network APIs.)
+(NOTE: Ultralytics is AGPL-3.0, so a license is required for commercial use; this also covers the YOLO-World model used for the `--fast` descriptions. The `--detailed` captioner, `moondream2`, is Apache-2.0. Everything runs locally - no external services or network APIs.)
 
 Claude suggested using the built-in tracking option with **BoT-SORT** tracker, as it has compensation for camera motion --> I accepted the suggestion.
 
-There were several discussions on how to save the tracking outputs; I tried to keep it simple (**CSV** for the per-frame tracks, plus a JSON metadata sidecar and a JSONL raw-detection cache — as opposed to Claude suggesting parquet) and defined the output format.
+There were several discussions on how to save the tracking outputs; I tried to keep it simple (**CSV** for the per-frame tracks, plus a JSON metadata sidecar and a JSONL raw-detection cache - as opposed to Claude suggesting parquet) and defined the output format.
 
 Claude wrote the code for the detection and tracking, and ran it over all the videos.
 
-The detection takes most of the runtime (on CPU) and is heavily dependent on frame count (not resolution — see [docs/timing_findings.txt](docs/timing_findings.txt)).
+The detection takes most of the runtime (on CPU) and is heavily dependent on frame count (not resolution - see [docs/timing_findings.txt](docs/timing_findings.txt)).
 
 ### Note on Detection quality
 Some objects were missed at the detection stage.
@@ -70,12 +79,14 @@ Programatically - it must have the person and vehicle bounding boxes in close pr
 It also required the model to be confident in the object detection
 I defined several parameters that may indicate an interaction and asked Claude to extract those per clip.
 
-The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area — the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates — a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. For example, the woman entering the gray car in `mKzCQKTHizw_0` (person 45 × vehicle 49): the normalized overlap climbs toward ~1.0 right over the GT interaction window — **the dark shaded band in the plot** — while the normalized distance drops. That separation is what the thresholds key on.
+The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area - the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates - a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. For example, the woman entering the gray car in `mKzCQKTHizw_0` (person 45 × vehicle 49): the normalized overlap climbs toward ~1.0 right over the GT interaction window - **the dark shaded band in the plot** - while the normalized distance drops. That separation is what the thresholds key on.
 
 ![Signals vs frame for an entering person; the dark shaded band is the ground-truth interaction window](docs/images/example_signal_plot.png)
 
 Next, I ran a LOSO (leave-one-scene-out) to find the thresholds per-fold. This showed the approach had merit.
 I fit a set of global thresholds on all clips together - these are the thresholds set in config ([`config.SHIPPED_THRESHOLDS`](person_vehicle_interactions/config.py)): `min_overlap=0.2`, `max_distance=0.0`, `min_duration_frames=10`, `min_confidence=0.3`, `max_gap_frames=15`.
+
+Reassuringly, these thresholds are not overfit to any one scene: **5 of the 6 LOSO folds produce a threshold set identical to the shipped one**. Only the grayscale-CCTV fold (`HIu4lM4B8hA_1`) differs - it wants `min_confidence=0.0` where the shipped set uses `0.3` - and there the shipped floor actually drops one false positive. So a single global threshold set generalizes across the held-out scenes rather than needing per-scene tuning (comparison via `scripts.compare_thresholds`).
 
 I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds. There were no surprises there, but I won't show the images here as the people in the video did not consent to being filmed.
 
@@ -113,6 +124,8 @@ I also decided not to unify split interactions at this time, as YOLO-world canno
 
   ![static occupant](docs/images/limitation_static_occupant.jpg)
 
+  The fix is to key on the **transition** rather than the level: an *enter* is an overlap that rises low→high and a *exit* falls high→low, whereas a seated occupant stays flat-high. That same rising/falling signature is also what would drive the enter/exit/other typing I scoped out - one signal addresses both the false trigger and the missing interaction type.
+
 - **CCTV detection recall:** low-res / grayscale clips (`HIu4lM4B8hA_1`) miss people and misclassify cars (the `boat` case), capping recall regardless of the interaction logic.
 
 ## Reproducibility
@@ -126,7 +139,7 @@ re-running the ~73-minute detection.
 The committed `outputs/` hold **15 interactions across the 8 clips** under the single shipped
 threshold set (`config.SHIPPED_THRESHOLDS`); `HIu4lM4B8hA_1` contributes **0** (the documented
 CCTV detection-recall miss, not a broken run). The precision/recall/F1 above is a separate,
-leakage-free LOSO **evaluation** device and is not what produces these shipped outputs — so its
+leakage-free LOSO **evaluation** device and is not what produces these shipped outputs - so its
 window counts (16 predictions vs 13 GT) are not expected to match the 15 committed interactions.
 
 # Future Improvements
