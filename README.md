@@ -3,6 +3,18 @@
 This is a high-level description + setup and run instructions for my results.
 Detailed description in the write-up file.
 
+## Deliverables
+ * Code - this is the repository - [https://github.com/anatshk/person-vehicle-interactions](https://github.com/anatshk/person-vehicle-interactions)
+ * Outputs - in the repo, under the [outputs](https://github.com/anatshk/person-vehicle-interactions/tree/main/outputs) folder. Each clip has a folder that contains:
+        * CSV file - these are the cached detections that allow us to skip the long-running detect-track step.
+        * meta.json file - properties of the video along with detect-track parameters used.
+        * interactions_fast.json file - required results, descriptions made by a fast but unreliable model
+        * interactions_detailed.json file - same as above, however the model provides reliable descriptions at a significantly longer runtime cost.
+ * Visualizations -
+        * [`outputs/sheets`](https://github.com/anatshk/person-vehicle-interactions/tree/main/outputs/sheets) contains images of the interactions found per clip.
+        * [`docs/images`](https://github.com/anatshk/person-vehicle-interactions/tree/main/docs/images) has a few examples used in [WRITE_UP.md](WRITE_UP.md)
+ * [WRITE_UP.md](WRITE_UP.md) - a write up of the development process along with trade-offs and decisions.
+
 ## Description (High-Level)
 
 1. Detection and Tracking - using Ultralytics YOLO11 + the built-in **BoT-SORT** tracker
