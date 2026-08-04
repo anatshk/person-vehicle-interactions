@@ -16,8 +16,8 @@ model-free and offline. Interactions are decided with ``config.SHIPPED_THRESHOLD
 input in a batch is reported and skipped so the rest still run.
 
 The ``run`` stage describes each interaction's person + vehicle with ``--fast`` (YOLO-World
-open-vocab, the default), ``--detailed`` (moondream2 VLM, slower/richer), or ``--placeholder``
-(model-free). A backend that fails to load falls back to placeholders with a warning.
+open-vocab, the default) or ``--detailed`` (moondream2 VLM, slower/richer). A backend that
+fails to load falls back to model-free placeholder descriptions with a warning.
 """
 
 from __future__ import annotations
@@ -230,13 +230,6 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_const",
         const="detailed",
         help="Detailed moondream2 VLM descriptions (slow, higher quality).",
-    )
-    run.add_argument(
-        "--placeholder",
-        dest="backend",
-        action="store_const",
-        const="placeholder",
-        help="Model-free placeholder descriptions (no model download).",
     )
     classify.add_argument(
         "path", type=Path, help="A tracks csv or a folder of cached tracks."
