@@ -1,0 +1,13 @@
+{
+  "clip_id": "iMGR_0AG3a8_2_3",
+  "fps": 6.667,
+  "frame_width": 960,
+  "frame_height": 720,
+  "frame_count": 182,
+  "model_name": "yolo11l.pt",
+  "image_size": 1280,
+  "confidence_threshold": 0.25,
+  "iou_threshold": 0.7,
+  "tracker_name": "botsort.yaml",
+  "seed": 0
+}
