@@ -12,8 +12,8 @@ outputs/
     <clip_id>.meta.json  # clip + detection config: fps, resolution, frame count, model, seed, ...
     <clip_id>_interactions_<YYYYMMDDHHMM>.json   # results JSON (added when the clip is classified)
   sheets/
-    <clip_id>/*.jpg      # annotated interaction contact sheets, one per interaction window
-                         # (JPEG q90; includes the external test clip)
+    README.md            # legend: what each sheet's title / tile captions / metrics mean
+    <clip_id>/*.jpg      # annotated interaction contact sheets, one per interaction window (JPEG q90)
 ```
 
 Classify a clip's cached tracks straight into a results JSON, no detection needed:
