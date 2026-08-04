@@ -131,8 +131,8 @@ in green, vehicle in red, drawn across the span plus context frames):
 python -m scripts.show_interactions [--clip <clip_id>]
 ```
 
-Sheets are written to `cache/viz/interactions/`; rendered sheets for every clip (and the
-external test clip) are committed under [`outputs/sheets/`](outputs/sheets/). Example — the
-`NmlzoaDcOuI_6` person↔car interaction (person 2 × vehicle 1, frames 0–42):
+Sheets are written to `cache/viz/interactions/`; rendered sheets for every clip are committed
+under [`outputs/sheets/`](outputs/sheets/) (see its README for the title/metric legend).
+Example — the `NmlzoaDcOuI_6` person↔car interaction (person 2 × vehicle 1, frames 0–42):
 
 ![Example interaction sheet](docs/images/example_interaction_sheet.png)
