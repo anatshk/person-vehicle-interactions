@@ -1,0 +1,39 @@
+{
+  "clip_id": "NmlzoaDcOuI_1",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "NmlzoaDcOuI_1",
+      "person_id": 24,
+      "vehicle_id": 1,
+      "start_frame": 11,
+      "end_frame": 37,
+      "start_seconds": 1.8333333333333333,
+      "end_seconds": 6.166666666666667,
+      "person": "a woman in dark clothing",
+      "vehicle": "a silver sedan"
+    },
+    {
+      "clip_id": "NmlzoaDcOuI_1",
+      "person_id": 39,
+      "vehicle_id": 1,
+      "start_frame": 54,
+      "end_frame": 83,
+      "start_seconds": 9.0,
+      "end_seconds": 13.833333333333334,
+      "person": "a woman in dark clothing",
+      "vehicle": "a silver sedan"
+    },
+    {
+      "clip_id": "NmlzoaDcOuI_1",
+      "person_id": 66,
+      "vehicle_id": 1,
+      "start_frame": 93,
+      "end_frame": 102,
+      "start_seconds": 15.5,
+      "end_seconds": 17.0,
+      "person": "a woman in colourful clothing",
+      "vehicle": "a silver sedan"
+    }
+  ]
+}

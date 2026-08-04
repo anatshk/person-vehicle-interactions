@@ -19,3 +19,11 @@ transformers==4.57.6
 einops==0.8.2
 pyvips==3.1.1
 pyvips-binary==8.18.4
+
+# --- Descriptions open-vocab (YOLO-World, for --fast) ---
+# CLIP text encoder for YOLO-World's open-vocab class prompts. This is ultralytics' CLIP fork
+# (the PyPI `clip` package is unrelated), pinned by commit. ftfy is a CLIP tokenizer dep. Both
+# are imported lazily by attribute_tagger, so the pipeline/tests run without them. The
+# yolov8s-world.pt weights auto-download on first use (git-ignored, like yolo11l.pt).
+clip @ git+https://github.com/ultralytics/CLIP.git@c4b6ea0932a2c0f39a0fa528af5ec4982ff15cab
+ftfy==6.3.1

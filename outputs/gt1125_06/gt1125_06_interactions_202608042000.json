@@ -1,0 +1,61 @@
+{
+  "clip_id": "gt1125_06",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 24,
+      "vehicle_id": 29,
+      "start_frame": 19,
+      "end_frame": 58,
+      "start_seconds": 0.6339666666666667,
+      "end_seconds": 1.9352666666666667,
+      "person": "a woman in dark clothing",
+      "vehicle": "a blue truck"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 21,
+      "vehicle_id": 6,
+      "start_frame": 216,
+      "end_frame": 297,
+      "start_seconds": 7.2072,
+      "end_seconds": 9.9099,
+      "person": "a woman in light clothing",
+      "vehicle": "a black SUV"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 18,
+      "vehicle_id": 5,
+      "start_frame": 239,
+      "end_frame": 369,
+      "start_seconds": 7.974633333333333,
+      "end_seconds": 12.3123,
+      "person": "a woman in light clothing",
+      "vehicle": "a black SUV"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 111,
+      "vehicle_id": 5,
+      "start_frame": 369,
+      "end_frame": 381,
+      "start_seconds": 12.3123,
+      "end_seconds": 12.7127,
+      "person": "a man in dark clothing",
+      "vehicle": "a black SUV"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 114,
+      "vehicle_id": 29,
+      "start_frame": 388,
+      "end_frame": 412,
+      "start_seconds": 12.946266666666666,
+      "end_seconds": 13.747066666666667,
+      "person": "a man in dark clothing",
+      "vehicle": "a blue truck"
+    }
+  ]
+}

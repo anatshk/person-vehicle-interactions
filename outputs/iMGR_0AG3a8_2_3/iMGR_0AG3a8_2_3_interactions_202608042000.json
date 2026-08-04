@@ -1,0 +1,17 @@
+{
+  "clip_id": "iMGR_0AG3a8_2_3",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "iMGR_0AG3a8_2_3",
+      "person_id": 55,
+      "vehicle_id": 3,
+      "start_frame": 43,
+      "end_frame": 58,
+      "start_seconds": 6.449677516124194,
+      "end_seconds": 8.699565021748914,
+      "person": "a woman in dark clothing",
+      "vehicle": "a black sedan"
+    }
+  ]
+}
