@@ -1,0 +1,13 @@
+{
+  "clip_id": "HIu4lM4B8hA_1",
+  "fps": 25.0,
+  "frame_width": 352,
+  "frame_height": 288,
+  "frame_count": 250,
+  "model_name": "yolo11l.pt",
+  "image_size": 1280,
+  "confidence_threshold": 0.25,
+  "iou_threshold": 0.7,
+  "tracker_name": "botsort.yaml",
+  "seed": 0
+}
