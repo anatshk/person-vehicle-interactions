@@ -71,9 +71,9 @@ Programatically - it must have the person and vehicle bounding boxes in close pr
 It also required the model to be confident in the object detection
 I defined several parameters that may indicate an interaction and asked Claude to extract those per clip.
 
-The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area — the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates — a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. For example, the woman entering the gray car in `mKzCQKTHizw_0` (person 45 × vehicle 49): the normalized overlap climbs toward ~1.0 right over the GT interaction window (shaded), while the normalized distance drops — the separation the thresholds key on.
+The parameters, per (person, vehicle) pair over time: **normalized overlap** (box intersection ÷ person-box area — the fraction of the person inside the vehicle box), **normalized center-distance** (÷ vehicle-box diagonal, so it is scale-invariant), and the per-frame **detection confidence**; plus temporal gates — a minimum **duration** in contact and a maximum **gap** bridged. These signals per pair vs the GT windows can be plotted with `scripts.plot_signals`. For example, the woman entering the gray car in `mKzCQKTHizw_0` (person 45 × vehicle 49): the normalized overlap climbs toward ~1.0 right over the GT interaction window — **the dark shaded band in the plot** — while the normalized distance drops. That separation is what the thresholds key on.
 
-![Signals vs GT for an entering person](docs/images/example_signal_plot.png)
+![Signals vs frame for an entering person; the dark shaded band is the ground-truth interaction window](docs/images/example_signal_plot.png)
 
 Next, I ran a LOSO (leave-one-scene-out) to find the thresholds per-fold. This showed the approach had merit.
 I fit a set of global thresholds on all clips together - these are the thresholds set in config ([`config.SHIPPED_THRESHOLDS`](person_vehicle_interactions/config.py)): `min_overlap=0.2`, `max_distance=0.0`, `min_duration_frames=10`, `min_confidence=0.3`, `max_gap_frames=15`.
