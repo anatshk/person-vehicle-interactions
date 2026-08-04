@@ -47,6 +47,7 @@ After going over the videos and describing them, I defined the work plan.
 ### Detection and Tracking
 I have chosen to use a pre-trained model, Ultralytics' YOLO11, for object detections.
 I have worked with these models in the past and feel that their framework is easy and flexible enough for many tasks.
+I did weigh newer alternatives - YOLO26 (NMS-free, strong on small objects) and RT-DETR - but chose YOLO11 to de-risk (mature, well-supported); the newer detectors are noted as a recall experiment in Future Improvements.
 (NOTE: Ultralytics is AGPL-3.0, so a license is required for commercial use; this also covers the YOLO-World model used for the `--fast` descriptions. The `--detailed` captioner, `moondream2`, is Apache-2.0. Everything runs locally - no external services or network APIs.)
 
 Claude suggested using the built-in tracking option with **BoT-SORT** tracker, as it has compensation for camera motion --> I accepted the suggestion.
@@ -88,7 +89,7 @@ I fit a set of global thresholds on all clips together - these are the threshold
 
 Reassuringly, these thresholds are not overfit to any one scene: **5 of the 6 LOSO folds produce a threshold set identical to the shipped one**. Only the grayscale-CCTV fold (`HIu4lM4B8hA_1`) differs - it wants `min_confidence=0.0` where the shipped set uses `0.3` - and there the shipped floor actually drops one false positive. So a single global threshold set generalizes across the held-out scenes rather than needing per-scene tuning (comparison via `scripts.compare_thresholds`).
 
-I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds. There were no surprises there, but I won't show the images here as the people in the video did not consent to being filmed.
+I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds. There were no surprises: on this fully held-out clip (4 people exiting one dark car) the pipeline emitted 14 candidate windows, reproducing the same fragmentation and pass-by false-positive behavior seen on the provided clips rather than anything new. I won't show the images here as the people in the video did not consent to being filmed.
 
 The pipeline reports interaction **candidates** (the person↔vehicle contact window); classifying each as enter / exit / other was scoped out - the brief only asks to *list* interactions - though the GT annotates the type, so it is a natural next step.
 
@@ -96,7 +97,7 @@ Each output record is **one person paired with one vehicle**: concurrent people 
 
 ## Analyzing the Interactions + Descriptions
 
-On the ground truth, the pipeline finds most real interactions: leave-one-scene-out (leakage-free) gives overall **precision 0.62 / recall 0.77 / F1 0.69** (10 TP, 6 FP, 3 FN across the 6 scenes). The recall miss is mostly the two detection failures noted above; the false positives are mostly **split interactions** (one real interaction fragmented across track-ID switches) plus a couple of hard pass-bys.
+On the ground truth, the pipeline finds most real interactions: leave-one-scene-out (leakage-free) gives overall **precision 0.62 / recall 0.77 / F1 0.69** (10 TP, 6 FP, 3 FN across the 6 scenes), evaluated against the 13 annotated GT interactions (6 enter, 6 exit, 1 other). The recall miss is mostly the two detection failures noted above; the false positives are mostly **split interactions** (one real interaction fragmented across track-ID switches) plus a couple of hard pass-bys.
 
 Going over the interactions highlighted the broken tracking - same interaction was split into several sections.
 My idea was to use the Description section to help filtering FPs and unifying segmented interactions.
