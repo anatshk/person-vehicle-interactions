@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-import numpy as np
+import pytest
 
 from person_vehicle_interactions.frame_crops import crop_box
 from tests.factories import make_tracked_box
+
+# numpy is not installed in lean CI (only lint/test tools) — skip the module there, matching
+# the other numpy-dependent tests; it runs wherever the runtime deps are present.
+np = pytest.importorskip("numpy")
 
 
 def test_crop_box_no_padding_returns_exact_box_region():

@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-from PIL import Image
+import pytest
 
 from person_vehicle_interactions.captioner import query_frame
+
+# numpy + Pillow are not installed in lean CI (only lint/test tools) — skip the module there,
+# matching the other numpy-dependent tests; it runs where the runtime deps are present.
+np = pytest.importorskip("numpy")
+Image = pytest.importorskip("PIL.Image")
 
 
 class _FakeModel:
