@@ -8,12 +8,9 @@ index and box corners, so ``crop_for_box`` turns (video, box) into the object's 
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
-from person_vehicle_interactions.tracked_data_model import TrackedBox
-
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import PathLike, TrackedBox
 
 
 def read_frame(video_path: PathLike, frame_index: int) -> Any:
