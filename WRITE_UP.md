@@ -8,26 +8,15 @@ My focus was on an offline pipeline, not real-time, due to these limitations.
 
 ## Overall Development with Claude Code
 
-I made sure to define what I want to do, then I reviewed any suggestions made by Claude.
-
-**There was no "paste the task into Claude and just let it run free".**
-
-Lots of code files - I asked Claude to separate as much as possible to make it easy for me to review.
-And I also asked Claude to work TDD, so this explains the amount of test files.
-
-I used [PLAN.md](docs/PLAN.md) to define what I want to do, then had a local (untracked) handover file to track the current status of all tasks between sessions.
-Any decisions were logged in [WORKLOG.md](docs/WORKLOG.md), so they will be available for summarization in this write-up.
-
-I asked Claude to create small PRs for each feature and reviewed those as I would for any colleague.
+I defined each step and reviewed every suggestion — **there was no "paste the task into Claude and let it run free".** I drove the design in [PLAN.md](docs/PLAN.md), logged decisions in [WORKLOG.md](docs/WORKLOG.md) (the source for this write-up), and had Claude split the code into small modules and work TDD (hence the many small files + tests), landing each feature as a small PR I reviewed as I would a colleague's.
 
 ## Ground Truth
 
-I had several GT overview sessions, where I asked Claude to track my observations.
-I reviewed all the clips and other images myself.
+I reviewed all clips and frames myself across several GT sessions (Claude recorded my observations):
 
-1. Watching and describing each of the video clips provided (see [ground_truth/ground_truth.md](ground_truth/ground_truth.md)), including descriptions of the scene, the camera used, and estimating start/end of interaction based on video timestamp - this was done first.
-2. Going over all of the relevant objects detected in each clip, noting where tracking broke down. (see [ground_truth/tracking_notes.md](ground_truth/tracking_notes.md))
-3. Fine-tuning the GT - asked Claude to show me frames around the start/end of the GT I indicated before, selected exact frames for interaction start/end.
+1. Watch and describe each clip — scene, camera, and a first estimate of interaction start/end from the video timestamp (see [ground_truth/ground_truth.md](ground_truth/ground_truth.md)).
+2. Review the tracked objects per clip, noting where tracking broke down (see [ground_truth/tracking_notes.md](ground_truth/tracking_notes.md)).
+3. Fine-tune the GT — Claude showed me frames around each estimated boundary; I picked the exact start/end frames.
 
 I also recorded the **scope decisions** in the GT file: interaction *types* are enter / exit / other (with `other` reportable behind a flag; default broad); a "vehicle" is the COCO `car` class only (every interaction here is with a car); and a *merge rule* treats consecutive engagements by the same person with the same vehicle whose boxes never separate as a single interaction.
 
@@ -36,32 +25,14 @@ I also recorded the **scope decisions** in the GT file: interaction *types* are 
 After going over the videos and describing them, I defined the work plan.
 
 ### Detection and Tracking
-I have chosen to use a pre-trained model, Ultralytics' YOLO11, for object detections.
-I have worked with these models in the past and feel that their framework is easy and flexible enough for many tasks.
+I use a pre-trained Ultralytics **YOLO11** detector — a framework I've worked with before and find flexible — with the built-in **BoT-SORT** tracker (Claude's suggestion, accepted for its camera-motion compensation). Tracks are cached simply: **CSV** per-frame, a JSON metadata sidecar, and a JSONL raw-detection cache (over Claude's parquet suggestion). Detection dominates runtime on CPU and scales with frame count, not resolution (see [docs/timing_findings.txt](docs/timing_findings.txt)).
+
 (NOTE: Ultralytics is AGPL-3.0, so a license is required for commercial use; this also covers the YOLO-World model used for the `--fast` descriptions. The `--detailed` captioner, `moondream2`, is Apache-2.0. Everything runs locally — no external services or network APIs.)
 
-Claude suggested using the built-in tracking option with **BoT-SORT** tracker, as it has compensation for camera motion --> I accepted the suggestion.
-
-There were several discussions on how to save the tracking outputs; I tried to keep it simple (**CSV** for the per-frame tracks, plus a JSON metadata sidecar and a JSONL raw-detection cache — as opposed to Claude suggesting parquet) and defined the output format.
-
-Claude wrote the code for the detection and tracking, and ran it over all the videos.
-
-The detection takes most of the runtime (on CPU) and is heavily dependent on frame count (not resolution — see [docs/timing_findings.txt](docs/timing_findings.txt)).
-
 ### Note on Detection quality
-Some objects were missed at the detection stage.
+Some objects were missed at detection. In the low-res grayscale night CCTV clip (`HIu4lM4B8hA_1`) the car wasn't detected under the "car" class alone — unfiltered detection revealed YOLO had labelled it **"boat"**. As a workaround I default the vehicle class to car + truck + bus, and added a per-clip override counting "boat" as a vehicle for this clip only (with a TODO to drive this from video properties — "low-quality → expand vehicle definition" — rather than hard-coding by name). In the same clip the man entering the car is barely detected (a couple of frames, not during the entry); in `iMGR_0AG3a8_2_3` (indoor parking garage) a woman exiting a car isn't detected at all.
 
-Example - in the low quality CCTV video (`HIu4lM4B8hA_1`, low-res grayscale night), the car was not detected at first (when used the "car" class alone). When I examined the full, unfiltered detection, it turns out it was identified as "boat".
-As a workaround, I made sure that "truck" and "bus" are added to "car" as the default vehicle class.
-For the specific video, I added an override that allows "boat" be counted as a vehicle for this video alone, along with a TODO that in the future this workaround should use the video properties to select the "low-quality-so-expand-definition-of-vehicle" route instead of hard-coding by video name.
-
-In the same video, the man stealing the vehicle is barely detected - only fleetingly (a couple of frames), and not at all through the actual entry.
-In another video (`iMGR_0AG3a8_2_3`, the indoor parking garage) - a woman exiting a car is not detcted at all.
-
-The YOLO model was probably **NOT** trained on CCTV videos, at least not exclusively.
-In the future, it may be beneficial to fine-tune / use models specifically trained on CCTV footage (or any other footage the customers provide) to improve detection (see Future Improvements below).
-
-Additionally, I'm no expert on tracking, but there are many tracking modules (or even video-ingesting models) to choose from, so this is another possible future optimization.
+YOLO was likely not trained primarily on CCTV, so fine-tuning on customer-representative footage — and swapping in a stronger tracker — are natural improvements (see Future Improvements).
 
 ## Extracting Interactions
 The first question here was "What defines a person-vehicle interaction?".
@@ -143,10 +114,3 @@ window counts (16 predictions vs 13 GT) are not expected to match the 15 committ
     a. Using GPU for faster image descriptions
     b. Using descriptions to filter out FPs
 4. A completely other direction - train a model that identifies interactions within videos - requires large amounts of labeled data.
-
-
-
-
-
-
-
