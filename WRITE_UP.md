@@ -38,7 +38,7 @@ After going over the videos and describing them, I defined the work plan.
 ### Detection and Tracking
 I have chosen to use a pre-trained model, Ultralytics' YOLO11, for object detections.
 I have worked with these models in the past and feel that their framework is easy and flexible enough for many tasks.
-(NOTE: license required for commercial use).
+(NOTE: Ultralytics is AGPL-3.0, so a license is required for commercial use; this also covers the YOLO-World model used for the `--fast` descriptions. The `--detailed` captioner, `moondream2`, is Apache-2.0. Everything runs locally — no external services or network APIs.)
 
 Claude suggested using the built-in tracking option with **BoT-SORT** tracker, as it has compensation for camera motion --> I accepted the suggestion.
 
@@ -81,6 +81,8 @@ I also took a video of people exiting a car with my phone, downsampled it and us
 
 The pipeline reports interaction **candidates** (the person↔vehicle contact window); classifying each as enter / exit / other was scoped out - the brief only asks to *list* interactions - though the GT annotates the type, so it is a natural next step.
 
+Each output record is **one person paired with one vehicle**: concurrent people around the same car become separate records (each with its own person description), rather than a single record listing several people. The brief allows "person(s)", so grouping simultaneous participants into one interaction is a reasonable alternative - deferred (see Future Improvements).
+
 ## Analyzing the Interactions + Descriptions
 
 On the ground truth, the pipeline finds most real interactions: leave-one-scene-out (leakage-free) gives overall **precision 0.62 / recall 0.77 / F1 0.69** (10 TP, 6 FP, 3 FN across the 6 scenes). The recall miss is mostly the two detection failures noted above; the false positives are mostly **split interactions** (one real interaction fragmented across track-ID switches) plus a couple of hard pass-bys.
@@ -115,7 +117,17 @@ I also decided not to unify split interactions at this time, as YOLO-world canno
 
 ## Reproducibility
 
-Models and seeds are pinned and CPU inference is deterministic; the detection **tracks** and the **results** are committed under `outputs/`, so a reviewer can reproduce the classify + description stage (and the contact sheets) without re-running the ~73-minute detection.
+Models and seeds are pinned and the detector/tracker run CPU-deterministically; the `moondream2`
+descriptions rely on the model's default greedy decode (no sampling) rather than an explicitly
+fixed generation seed. The detection **tracks** and the **results** are committed under `outputs/`,
+so a reviewer can reproduce the classify + description stage (and the contact sheets) without
+re-running the ~73-minute detection.
+
+The committed `outputs/` hold **15 interactions across the 8 clips** under the single shipped
+threshold set (`config.SHIPPED_THRESHOLDS`); `HIu4lM4B8hA_1` contributes **0** (the documented
+CCTV detection-recall miss, not a broken run). The precision/recall/F1 above is a separate,
+leakage-free LOSO **evaluation** device and is not what produces these shipped outputs — so its
+window counts (16 predictions vs 13 GT) are not expected to match the 15 committed interactions.
 
 # Future Improvements
 
