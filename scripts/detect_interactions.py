@@ -11,13 +11,17 @@ artifacts stay together.
     python -m scripts.detect_interactions detect-and-track <video|folder>  # video -> tracks
     python -m scripts.detect_interactions classify-tracks <tracks|folder>  # tracks -> results
 
-The full/detect stages run YOLO11-l + BoT-SORT (needs the model); classify-tracks is
-model-free and offline. Interactions are decided with ``config.SHIPPED_THRESHOLDS``; a bad
-input in a batch is reported and skipped so the rest still run.
+The full/detect stages run YOLO11-l + BoT-SORT (needs the model). Interactions are decided
+with ``config.SHIPPED_THRESHOLDS``; a bad input in a batch is reported and skipped so the
+rest still run.
 
-The ``run`` stage describes each interaction's person + vehicle with ``--fast`` (YOLO-World
-open-vocab, the default) or ``--detailed`` (moondream2 VLM, slower/richer). A backend that
-fails to load falls back to model-free placeholder descriptions with a warning.
+Both ``run`` and ``classify-tracks`` describe each interaction's person + vehicle with
+``--fast`` (YOLO-World open-vocab, the default) or ``--detailed`` (moondream2 VLM,
+slower/richer). Descriptions need the video pixels: ``run`` has the video as its input, while
+``classify-tracks`` finds it at ``<videos-dir>/<clip>.mp4`` (default ``Videos/``) or a
+``--video`` override, and additionally accepts ``--placeholder`` to stay model-free and
+offline. A backend that fails to load, or a missing video, falls back to placeholder
+descriptions with a warning rather than aborting the run.
 """
 
 from __future__ import annotations
@@ -35,6 +39,7 @@ from person_vehicle_interactions.config import (
     RESULTS_DIR,
     SHIPPED_THRESHOLDS,
     target_class_ids_for_clip,
+    VIDEOS_DIR,
 )
 from person_vehicle_interactions.describers import Describer
 from scripts.build_results import build_clip_results, make_describe_box
@@ -160,22 +165,46 @@ def _copy_tracks_into(tracks_path: Path, clip_dir: Path) -> None:
 
 
 def process_tracks_classify(
-    tracks_path: Path, results_dir: Path = RESULTS_DIR, generated_at=None
+    tracks_path: Path,
+    results_dir: Path = RESULTS_DIR,
+    generated_at=None,
+    describer: Describer | None = None,
+    method: str = "placeholder",
+    videos_dir: Path = VIDEOS_DIR,
+    video: Path | None = None,
 ) -> Path:
     """
     Classify one cached tracks file into its per-clip folder. Returns the results JSON.
     The source tracks (csv + metadata) are copied into the folder so it holds the same
     tracks-plus-results bundle the full pipeline produces.
+
+    ``describer`` (when given) captions each interaction's person + vehicle from the clip's
+    video pixels: the ``video`` override, else ``videos_dir/<clip>.mp4``. If no describer is
+    selected, or its video can't be found, the model-free placeholder descriptions are used
+    (with a warning in the missing-video case) so this never crashes. ``method`` labels the
+    backend in the output filename.
     """
     clip_id = tracks_path.stem
     clip_dir = Path(results_dir) / clip_id
     _copy_tracks_into(tracks_path, clip_dir)
+    describe_box = None
+    if describer is not None:
+        clip_video = video if video is not None else Path(videos_dir) / f"{clip_id}.mp4"
+        if clip_video.exists():
+            describe_box = make_describe_box(clip_video, describer)
+        else:
+            print(
+                f"warning: no video for '{clip_id}' at {clip_video}; using placeholders"
+            )
+            method = "placeholder"
     return build_clip_results(
         clip_id,
         SHIPPED_THRESHOLDS,
         tracks_dir=clip_dir,
         results_dir=clip_dir,
         generated_at=generated_at,
+        describe_box=describe_box,
+        method=method,
     )
 
 
@@ -238,6 +267,40 @@ def _build_parser() -> argparse.ArgumentParser:
         "path", type=Path, help="A tracks csv or a folder of cached tracks."
     )
     classify.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
+    classify.add_argument(
+        "--fast",
+        dest="backend",
+        action="store_const",
+        const="fast",
+        default="fast",
+        help="Fast YOLO-World open-vocab descriptions (default); needs the clip's video.",
+    )
+    classify.add_argument(
+        "--detailed",
+        dest="backend",
+        action="store_const",
+        const="detailed",
+        help="Detailed moondream2 VLM descriptions (slow); needs the clip's video.",
+    )
+    classify.add_argument(
+        "--placeholder",
+        dest="backend",
+        action="store_const",
+        const="placeholder",
+        help="Model-free placeholder descriptions (offline; no video needed).",
+    )
+    classify.add_argument(
+        "--videos-dir",
+        type=Path,
+        default=VIDEOS_DIR,
+        help="Folder to find each clip's <clip>.mp4 for descriptions (default: Videos/).",
+    )
+    classify.add_argument(
+        "--video",
+        type=Path,
+        default=None,
+        help="Explicit video for a single clip (overrides --videos-dir lookup).",
+    )
     return parser
 
 
@@ -264,7 +327,15 @@ def _processor_for(args: argparse.Namespace) -> Callable[[Path], Path]:
             process_video_detect, results_dir=args.results_dir, force=args.force
         )
     if args.command == "classify-tracks":
-        return functools.partial(process_tracks_classify, results_dir=args.results_dir)
+        describer, method = _describer_for(args)
+        return functools.partial(
+            process_tracks_classify,
+            results_dir=args.results_dir,
+            describer=describer,
+            method=method,
+            videos_dir=args.videos_dir,
+            video=args.video,
+        )
     describer, method = _describer_for(args)
     return functools.partial(
         process_video_full,
