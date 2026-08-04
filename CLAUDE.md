@@ -11,6 +11,17 @@ Deliverables: reproducible Python source plus a README with setup and run instru
 machine-readable output artifact, and a write-up (≤2 pages) covering approach, assumptions,
 limitations, and next steps.
 
+## Code style
+
+Google Python Style Guide, with Black (88), isort (`profile = "google"`,
+`force_single_line = false`) and mypy configured in `pyproject.toml`. Type hints on every
+signature, Google-style docstrings, pytest test-first for core logic.
+
+Two conventions no formatter enforces: **multi-line docstrings start on the line after the
+opening `"""`** (summary second line, not first), and **no gratuitous blank lines** — none
+between a docstring summary and its body unless the docstring is long or structured, none at
+the start of a function body.
+
 ## Deviations from my global conventions
 
 - **This is a take-home, not production.** Keep scope reasonable and favor a clear, working
