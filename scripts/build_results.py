@@ -105,12 +105,14 @@ def build_clip_results(
     results_dir: PathLike = RESULTS_DIR,
     generated_at: datetime.datetime | None = None,
     describe_box: DescribeBox | None = None,
+    method: str = "placeholder",
 ) -> Path:
     """
     Detect one clip's interactions and write its per-clip results JSON; return the path.
     ``generated_at`` defaults to now; pass an explicit value for deterministic output.
     ``describe_box`` supplies real descriptions (crop + caption); when ``None`` the model-free
-    placeholder is used, so this stays runnable without a video or model.
+    placeholder is used, so this stays runnable without a video or model. ``method`` labels the
+    backend (``fast`` / ``detailed`` / ``placeholder``) in the output filename.
     """
     boxes = load_tracks(Path(tracks_dir) / f"{clip_id}.csv")
     metadata = load_metadata(Path(tracks_dir) / f"{clip_id}.meta.json")
@@ -122,4 +124,4 @@ def build_clip_results(
         else make_placeholder_describe_window(boxes)
     )
     records = build_clip_records(clip_id, windows, metadata.fps, describe_window)
-    return write_clip_records(records, clip_id, results_dir, generated_at)
+    return write_clip_records(records, clip_id, results_dir, generated_at, method)

@@ -97,11 +97,13 @@ def process_video_full(
     force: bool = False,
     generated_at=None,
     describer: Describer | None = None,
+    method: str = "placeholder",
 ) -> Path:
     """
     Full pipeline for one video: detect + track, then classify. Returns the results JSON.
     ``describer`` (when given) captions each interaction's person + vehicle from the video
-    pixels; otherwise the model-free placeholder descriptions are used.
+    pixels; otherwise the model-free placeholder descriptions are used. ``method`` labels the
+    backend in the output filename.
     """
     clip_dir = Path(results_dir) / video_path.stem
     _detect_and_track(video_path, clip_dir, force)
@@ -115,6 +117,7 @@ def process_video_full(
         results_dir=clip_dir,
         generated_at=generated_at,
         describe_box=describe_box,
+        method=method,
     )
 
 
@@ -238,19 +241,20 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _describer_for(args: argparse.Namespace) -> Describer | None:
+def _describer_for(args: argparse.Namespace) -> tuple[Describer | None, str]:
     """
-    Build the chosen descriptions backend, falling back to placeholders if it can't load.
-    A missing model / dependency prints a warning and continues rather than aborting the run.
+    Build the chosen descriptions backend, returning ``(describer, method)``.
+    Falls back to placeholders (``method="placeholder"``) if the backend can't load — a missing
+    model / dependency prints a warning and continues rather than aborting the run.
     """
     backend = getattr(args, "backend", "placeholder")
     try:
-        return build_describer(backend)
+        return build_describer(backend), backend
     except Exception as error:  # noqa: BLE001 - a missing model must not abort the run.
         print(
             f"warning: '{backend}' descriptions unavailable ({error}); using placeholders"
         )
-        return None
+        return None, "placeholder"
 
 
 def _processor_for(args: argparse.Namespace) -> Callable[[Path], Path]:
@@ -261,11 +265,13 @@ def _processor_for(args: argparse.Namespace) -> Callable[[Path], Path]:
         )
     if args.command == "classify-tracks":
         return functools.partial(process_tracks_classify, results_dir=args.results_dir)
+    describer, method = _describer_for(args)
     return functools.partial(
         process_video_full,
         results_dir=args.results_dir,
         force=args.force,
-        describer=_describer_for(args),
+        describer=describer,
+        method=method,
     )
 
 

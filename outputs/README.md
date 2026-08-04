@@ -10,7 +10,9 @@ outputs/
   <clip_id>/
     <clip_id>.csv        # tracked person/vehicle boxes per frame (the detection+tracking output)
     <clip_id>.meta.json  # clip + detection config: fps, resolution, frame count, model, seed, ...
-    <clip_id>_interactions_<YYYYMMDDHHMM>.json   # results JSON (added when the clip is classified)
+    <clip_id>_interactions_<method>_<YYYYMMDDHHMM>.json   # results JSON; <method> = the
+                         # description backend: fast (YOLO-World) / detailed (moondream2) /
+                         # placeholder. Both fast + detailed results are committed here.
   sheets/
     README.md            # legend: what each sheet's title / tile captions / metrics mean
     <clip_id>/*.jpg      # annotated interaction contact sheets, one per interaction window (JPEG q90)

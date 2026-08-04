@@ -65,9 +65,9 @@ def test_write_clip_records_filename_and_payload(tmp_path):
         "clipA", [_pred(10, 20)], fps=10.0, describe_window=_describe_window
     )
     path = write_clip_records(
-        records, "clipA", results_dir=tmp_path, generated_at=GENERATED_AT
+        records, "clipA", results_dir=tmp_path, generated_at=GENERATED_AT, method="fast"
     )
-    assert path == tmp_path / "clipA_interactions_202607301345.json"
+    assert path == tmp_path / "clipA_interactions_fast_202607301345.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["clip_id"] == "clipA"
     assert payload["generated_at"] == "2026-07-30T13:45:00"
