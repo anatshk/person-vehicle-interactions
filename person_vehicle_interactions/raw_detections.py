@@ -25,9 +25,7 @@ from person_vehicle_interactions.detection_processing import (
     COCO_ID_TO_NAME,
     filter_detections_by_class,
 )
-from person_vehicle_interactions.tracked_data_model import TrackedBox
-
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import PathLike, TrackedBox
 
 
 @dataclasses.dataclass

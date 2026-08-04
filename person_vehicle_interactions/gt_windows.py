@@ -11,7 +11,7 @@ import csv
 import dataclasses
 from pathlib import Path
 
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import PathLike
 
 
 @dataclasses.dataclass

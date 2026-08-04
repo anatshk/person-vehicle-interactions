@@ -36,10 +36,9 @@ from person_vehicle_interactions.track_selection import highest_confidence_box_p
 from person_vehicle_interactions.tracked_data_model import (
     load_metadata,
     load_tracks,
+    PathLike,
     TrackedBox,
 )
-
-PathLike = Path | str
 
 
 def make_placeholder_describe_window(boxes: list[TrackedBox]) -> DescribeWindow:
