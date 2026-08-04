@@ -1,0 +1,61 @@
+{
+  "clip_id": "gt1125_06",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 24,
+      "vehicle_id": 29,
+      "start_frame": 19,
+      "end_frame": 58,
+      "start_seconds": 0.6339666666666667,
+      "end_seconds": 1.9352666666666667,
+      "person": "Male, white long-sleeved shirt, beige pants, black shoes",
+      "vehicle": "A green, curved, box-like object, possibly a garbage bin or container."
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 21,
+      "vehicle_id": 6,
+      "start_frame": 216,
+      "end_frame": 297,
+      "start_seconds": 7.2072,
+      "end_seconds": 9.9099,
+      "person": "Male, wearing khaki shorts and a gray t-shirt, walking on a gray surface.",
+      "vehicle": "A white SUV with black roof and trim."
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 18,
+      "vehicle_id": 5,
+      "start_frame": 239,
+      "end_frame": 369,
+      "start_seconds": 7.974633333333333,
+      "end_seconds": 12.3123,
+      "person": "Male, wearing black and khaki shorts, white sneakers, and dark t-shirt.",
+      "vehicle": "SUV, dark blue"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 111,
+      "vehicle_id": 5,
+      "start_frame": 369,
+      "end_frame": 381,
+      "start_seconds": 12.3123,
+      "end_seconds": 12.7127,
+      "person": "Male, dark clothing, light-colored sandals",
+      "vehicle": "SUV, dark blue"
+    },
+    {
+      "clip_id": "gt1125_06",
+      "person_id": 114,
+      "vehicle_id": 29,
+      "start_frame": 388,
+      "end_frame": 412,
+      "start_seconds": 12.946266666666666,
+      "end_seconds": 13.747066666666667,
+      "person": "Male, black shirt, grey background",
+      "vehicle": "A green, curved, box-like object, possibly a garbage bin or container."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "clip_id": "NmlzoaDcOuI_6",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "NmlzoaDcOuI_6",
+      "person_id": 2,
+      "vehicle_id": 1,
+      "start_frame": 0,
+      "end_frame": 42,
+      "start_seconds": 0.0,
+      "end_seconds": 7.0,
+      "person": "Male, wearing green, black, and white.",
+      "vehicle": "Red four-door sedan"
+    }
+  ]
+}
