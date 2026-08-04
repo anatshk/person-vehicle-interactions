@@ -150,7 +150,7 @@ polluting other clips; COCO map kept as an external data file (stdlib load, no u
 in the pure module); object sheets select by confidence, not box size.
 
 **Object-noting review (all 8 clips):** went clip-by-clip through the `show_objects` sheets
-recording tracking issues → [ground_truth/tracking_notes.md](ground_truth/tracking_notes.md).
+recording tracking issues → [ground_truth/tracking_notes.md](../ground_truth/tracking_notes.md).
 **ID switches are pervasive** — interacting objects fragment into 2–11 track ids (worst: the
 cover-remover in `1THkHYIQ_bY_0` ≈ 11 ids); plus spurious tracks (open car doors, car-cover
 artifacts) and a couple of missed people. **Decision:** don't retune/rerun tracking
@@ -354,8 +354,8 @@ driven by watching each clip.
   scene, different angle) and `NmlzoaDcOuI_1`/`_6` (same camera, different car).
 
 **Outcome:** All 8 clips annotated in
-[ground_truth/ground_truth.md](ground_truth/ground_truth.md) (human-readable) and
-[ground_truth/interactions.csv](ground_truth/interactions.csv) (eval mirror), then
+[ground_truth/ground_truth.md](../ground_truth/ground_truth.md) (human-readable) and
+[ground_truth/interactions.csv](../ground_truth/interactions.csv) (eval mirror), then
 **frame-refined** via labeled ffmpeg contact sheets (reviewer picked exact start/end
 frames per interaction; script in scratchpad `frame_sheet.sh`). Applying the
 contact-window + same-person/same-vehicle **merge rules** gives **13 interactions total**

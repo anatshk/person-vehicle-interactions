@@ -1,7 +1,7 @@
 # Plan — Person-Vehicle Interaction Detection
 
 Living plan for the pipeline. Stages/components level (not function signatures yet).
-Ground truth lives in [ground_truth/](ground_truth/); rules in [CLAUDE.md](CLAUDE.md);
+Ground truth lives in [ground_truth/](../ground_truth/); rules in [CLAUDE.md](../CLAUDE.md);
 decision history in [WORKLOG.md](WORKLOG.md).
 
 ## Objective

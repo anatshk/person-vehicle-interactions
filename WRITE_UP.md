@@ -16,8 +16,8 @@ I made sure to define what I want to do, then I reviewed any suggestions made by
 Lots of code files - I asked Claude to separate as much as possible to make it easy for me to review.
 And I also asked Claude to work TDD, so this explains the amount of test files.
 
-I used [PLAN.md](PLAN.md) to define what I want to do, then had a local (untracked) handover file to track the current status of all tasks between sessions.
-Any decisions were logged in WORKLOG.md, so they will be available for summarization in this write-up.
+I used [PLAN.md](docs/PLAN.md) to define what I want to do, then had a local (untracked) handover file to track the current status of all tasks between sessions.
+Any decisions were logged in [WORKLOG.md](docs/WORKLOG.md), so they will be available for summarization in this write-up.
 
 I asked Claude to create small PRs for each feature and reviewed those as I would for any colleague.
 
