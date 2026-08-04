@@ -1,0 +1,28 @@
+{
+  "clip_id": "1THkHYIQ_bY_0",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "1THkHYIQ_bY_0",
+      "person_id": 27,
+      "vehicle_id": 5,
+      "start_frame": 51,
+      "end_frame": 113,
+      "start_seconds": 1.7,
+      "end_seconds": 3.7666666666666666,
+      "person": "a woman in dark clothing",
+      "vehicle": "a black sedan"
+    },
+    {
+      "clip_id": "1THkHYIQ_bY_0",
+      "person_id": 27,
+      "vehicle_id": 17,
+      "start_frame": 68,
+      "end_frame": 91,
+      "start_seconds": 2.2666666666666666,
+      "end_seconds": 3.033333333333333,
+      "person": "a woman in dark clothing",
+      "vehicle": "a black sedan"
+    }
+  ]
+}

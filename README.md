@@ -99,7 +99,7 @@ Per-clip results are committed under [`outputs/`](outputs/) (one folder per clip
 the pipeline yourself also writes them to the git-ignored `cache/results/<clip_id>/`.
 
 Each clip writes a timestamped JSON, `<clip_id>_interactions_<YYYYMMDDHHMM>.json`. Example
-(illustrative):
+(`NmlzoaDcOuI_6`, run with `--detailed`):
 
 ```json
 {
@@ -114,15 +114,17 @@ Each clip writes a timestamped JSON, `<clip_id>_interactions_<YYYYMMDDHHMM>.json
       "end_frame": 42,
       "start_seconds": 0.0,
       "end_seconds": 7.0,
-      "person": "a man in dark clothing",
-      "vehicle": "a silver sedan"
+      "person": "Male, wearing green, black, and white.",
+      "vehicle": "Red four-door sedan"
     }
   ]
 }
 ```
 
 Each interaction carries the clip id, the person and vehicle **track ids**, the **frame
-range** and matching **time span** (seconds), and a short **description** of each.
+range** and matching **time span** (seconds), and a short **description** of each. The
+committed `outputs/` use the default `--fast` backend; `--detailed` (moondream2, shown above)
+is more accurate but much slower on CPU.
 
 To visualize an interaction, `show_interactions` renders annotated contact sheets (person
 in green, vehicle in red, drawn across the span plus context frames):
