@@ -145,6 +145,38 @@ def test_process_video_full_detects_then_classifies(tmp_path, monkeypatch):
     assert records[0].clip_id == clip_id
 
 
+def test_process_video_full_uses_describer_for_descriptions(tmp_path, monkeypatch):
+    clip_id = "describedclip"
+
+    def fake_detect(video_path: Path, clip_dir: Path, force: bool = False) -> Path:
+        return _write_synthetic_tracks(clip_dir, video_path.stem)
+
+    monkeypatch.setattr(detect_interactions, "_detect_and_track", fake_detect)
+    # Skip real video I/O: the crop is irrelevant to the injected describer.
+    monkeypatch.setattr("scripts.build_results.crop_for_box", lambda *a, **k: object())
+    video_path = tmp_path / "videos" / f"{clip_id}.mp4"
+    video_path.parent.mkdir()
+    video_path.write_bytes(b"")
+
+    def describer(crop, kind):
+        return f"a {kind} (described)"
+
+    path = process_video_full(
+        video_path,
+        results_dir=tmp_path / "out",
+        generated_at=GENERATED_AT,
+        describer=describer,
+    )
+
+    record = load_clip_records(path)[0]
+    assert record.person == "a person (described)"
+    assert record.vehicle == "a vehicle (described)"
+
+
+def test_build_describer_placeholder_is_none():
+    assert detect_interactions.build_describer("placeholder") is None
+
+
 def test_process_all_reports_failures_and_continues(tmp_path, capsys):
     good = tmp_path / "good.csv"
     bad = tmp_path / "bad.csv"

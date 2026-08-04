@@ -14,7 +14,11 @@ from person_vehicle_interactions.tracked_data_model import (
     save_metadata,
     save_tracks,
 )
-from scripts.build_results import build_clip_results, make_placeholder_describe_window
+from scripts.build_results import (
+    build_clip_results,
+    build_describe_window,
+    make_placeholder_describe_window,
+)
 from tests.factories import make_interaction_prediction, make_person_in_vehicle_boxes
 
 CLIP_ID = "results_clip"
@@ -42,6 +46,30 @@ def test_describe_window_labels_person_and_vehicle_by_track():
     describe_window = make_placeholder_describe_window(boxes)
     window = make_interaction_prediction(0, 4, person_id=1, vehicle_id=2)
     assert describe_window(window) == ("person (track 1)", "car (track 2)")
+
+
+def test_build_describe_window_describes_each_track_once(tmp_path):
+    # Two windows share person track 1 and vehicle track 2 (different vehicle in the second).
+    boxes = make_person_in_vehicle_boxes(range(0, 5), person_id=1, vehicle_id=2)
+    boxes += make_person_in_vehicle_boxes(range(0, 5), person_id=1, vehicle_id=3)
+    calls: list[int] = []
+
+    def describe_box(box):
+        calls.append(box.track_id)
+        return f"described-{box.track_id}"
+
+    describe_window = build_describe_window(boxes, describe_box)
+    first = describe_window(
+        make_interaction_prediction(0, 4, person_id=1, vehicle_id=2)
+    )
+    second = describe_window(
+        make_interaction_prediction(0, 4, person_id=1, vehicle_id=3)
+    )
+
+    assert first == ("described-1", "described-2")
+    assert second == ("described-1", "described-3")
+    # Person track 1 recurs across both windows but is described only once (dedup cache).
+    assert sorted(calls) == [1, 2, 3]
 
 
 def test_build_clip_results_writes_reloadable_json(tmp_path):
