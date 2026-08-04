@@ -8,6 +8,9 @@ tests/videos/
 # Auto-downloaded model weights (external asset)
 *.pt
 
+# Session handover notes — working state, not a deliverable
+CURRENT_STATUS.md
+
 # Python
 __pycache__/
 *.py[cod]
