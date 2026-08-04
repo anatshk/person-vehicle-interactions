@@ -18,6 +18,14 @@ All times in seconds.
   NmlzoaDcOuI_1    1280x720      6.000  108     1.2       179.1        ~0       ~0         ~0
   NmlzoaDcOuI_6    1280x720      6.000  102     2.0       177.0        ~0       0.01       ~0
 
+External held-out test clip (my phone video; no ground truth, so eval = n/a):
+
+  PXL_..._720p12   720x1280     12.000  622     5.9      1083.5        0.02     0.02       n/a
+
+  Note it lands at 1083.5 s / 622 frames = 1.74 s/frame -- squarely in the band below -- and its
+  total is ~= the 4K clip's (600 frames) DESPITE being 720p, not 4K. A clean confirmation of
+  takeaway 2: frame count drives cost, not resolution.
+
 
 Key takeaways
 -------------
