@@ -1,7 +1,8 @@
 # Anat Shkolyar - Person-Vehicle Interaction Task
 
 This is a high-level description + setup and run instructions for my results.
-Detailed description in the write-up file.
+The write-up comes in two forms: a one-page [executive summary](WRITE_UP.md) and the full
+[detailed write-up](docs/DETAILED_WRITE_UP.md).
 
 ## Deliverables
 - Code - this is the repository - [https://github.com/anatshk/person-vehicle-interactions](https://github.com/anatshk/person-vehicle-interactions)
@@ -12,8 +13,9 @@ Detailed description in the write-up file.
   - `<clip_id>_interactions_detailed_<YYYYMMDDHHMM>.json` - same as above, however the model provides reliable descriptions at a significantly longer runtime cost.
 - Visualizations -
   - [`outputs/sheets`](https://github.com/anatshk/person-vehicle-interactions/tree/main/outputs/sheets) contains images of the interactions found per clip.
-  - [`docs/images`](https://github.com/anatshk/person-vehicle-interactions/tree/main/docs/images) has a few examples used in [WRITE_UP.md](WRITE_UP.md)
-- [WRITE_UP.md](WRITE_UP.md) - a write up of the development process along with trade-offs and decisions.
+  - [`docs/images`](https://github.com/anatshk/person-vehicle-interactions/tree/main/docs/images) has a few examples used in the [detailed write-up](docs/DETAILED_WRITE_UP.md)
+- [WRITE_UP.md](WRITE_UP.md) - one-page executive summary (approach, results, assumptions, limitations, next steps).
+- [docs/DETAILED_WRITE_UP.md](docs/DETAILED_WRITE_UP.md) - the full write-up: development process, trade-offs, decisions, and per-clip analysis.
 
 ## Description (High-Level)
 
@@ -29,13 +31,14 @@ Detailed description in the write-up file.
 4. Get descriptions for the objects involved in the interaction (open-vocab YOLO-World by
    default, or a moondream2 VLM).
 
-Details on the development are in the write-up: [WRITE_UP.md](WRITE_UP.md).
+Details on the development are in the write-up: the [executive summary](WRITE_UP.md) or the
+full [detailed write-up](docs/DETAILED_WRITE_UP.md).
 
 ## TLDR - How to run it
 
 ### Environment Setup
 
-Python 3.12. Development was **CPU-only**, so that is the tested path — the GPU install below
+Python 3.12. Development was **CPU-only**, so that is the tested path - the GPU install below
 is provided for convenience but is **not verified here**, so no promises it behaves identically.
 Install torch first, then the pinned dependencies:
 
@@ -53,11 +56,11 @@ pip install -r requirements.txt
 
 External model weights download automatically on first use (no manual step):
 
-- `yolo11l.pt` — the detector. Ultralytics (**AGPL-3.0**; commercial use needs a license).
-- `yolov8s-world.pt` — YOLO-World, for the fast (`--fast`) descriptions. Ultralytics (**AGPL-3.0**).
-- `moondream2` (@ 2025-06-21, ~3.7 GB) — for the detailed (`--detailed`) descriptions (**Apache-2.0**).
+- `yolo11l.pt` - the detector. Ultralytics (**AGPL-3.0**; commercial use needs a license).
+- `yolov8s-world.pt` - YOLO-World, for the fast (`--fast`) descriptions. Ultralytics (**AGPL-3.0**).
+- `moondream2` (@ 2025-06-21, ~3.7 GB) - for the detailed (`--detailed`) descriptions (**Apache-2.0**).
 
-No external services or network APIs are used at inference time — everything runs locally.
+No external services or network APIs are used at inference time - everything runs locally.
 
 ### Run Instructions
 
@@ -108,7 +111,7 @@ re-running detection. It finds each clip's video at `Videos/<clip>.mp4` (overrid
 `--videos-dir` / `--video`); add `--placeholder` to stay fully offline (no video, model-free
 labels).
 
-Runtimes (CPU): detection + tracking dominates (per-frame inference at `imgsz=1280`) — the
+Runtimes (CPU): detection + tracking dominates (per-frame inference at `imgsz=1280`) - the
 4K aerial clip is by far the slowest, the small CCTV clips are quick. `--detailed` is the
 other slow part (the VLM runs ~minutes per crop). A per-stage timing table + analysis is in
 [`docs/timing_findings.txt`](docs/timing_findings.txt) (produced by `python -m scripts.time_pipeline`).
@@ -125,7 +128,7 @@ The committed outputs hold **15 interactions across the 8 clips** (both `--fast`
 |---|---|
 | `1THkHYIQ_bY_0` | 2 |
 | `gt1125_06` | 5 |
-| `HIu4lM4B8hA_1` | 0 (expected — see the CCTV detection-recall limitation in the write-up) |
+| `HIu4lM4B8hA_1` | 0 (expected - see the CCTV detection-recall limitation in the write-up) |
 | `iMGR_0AG3a8_2_3` | 1 |
 | `mKzCQKTHizw_0` | 2 |
 | `mKzCQKTHizw_1` | 1 |
@@ -172,6 +175,6 @@ python -m scripts.show_interactions [--clip <clip_id>]
 
 Sheets are written to `cache/viz/interactions/`; rendered sheets for every clip are committed
 under [`outputs/sheets/`](outputs/sheets/) (see its README for the title/metric legend).
-Example — the `NmlzoaDcOuI_6` person↔car interaction (person 2 × vehicle 1, frames 0–42):
+Example - the `NmlzoaDcOuI_6` person↔car interaction (person 2 × vehicle 1, frames 0-42):
 
 ![Example interaction sheet](docs/images/example_interaction_sheet.png)
