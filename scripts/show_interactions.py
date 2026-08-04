@@ -43,6 +43,7 @@ from person_vehicle_interactions.tracked_data_model import (
     frame_to_seconds,
     load_metadata,
     load_tracks,
+    PathLike,
     TrackedBox,
 )
 from person_vehicle_interactions.visualization import (
@@ -59,8 +60,6 @@ from scripts.run_loso import (
     load_boxes_by_clip,
     make_fit_thresholds,
 )
-
-PathLike = Path | str
 
 # How many frames to sample across a window's span, plus context frames each side.
 IN_SAMPLE_COUNT = 5

@@ -24,10 +24,9 @@ from person_vehicle_interactions.track_selection import (
 from person_vehicle_interactions.tracked_data_model import (
     load_metadata,
     load_tracks,
+    PathLike,
     TrackedBox,
 )
-
-PathLike = Path | str
 
 BOX_COLOR_BGR = (0, 255, 0)
 PERSON_COLOR_BGR = (0, 255, 0)  # green

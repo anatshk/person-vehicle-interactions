@@ -18,9 +18,7 @@ from pathlib import Path
 
 from person_vehicle_interactions.candidate_detection import PredictedWindow
 from person_vehicle_interactions.config import RESULTS_DIR
-from person_vehicle_interactions.tracked_data_model import frame_to_seconds
-
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import frame_to_seconds, PathLike
 
 # Maps a predicted window to its (person_description, vehicle_description).
 DescribeWindow = Callable[[PredictedWindow], tuple[str, str]]

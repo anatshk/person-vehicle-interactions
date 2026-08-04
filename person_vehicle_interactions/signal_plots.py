@@ -14,8 +14,7 @@ from typing import Any
 
 from person_vehicle_interactions.gt_windows import InteractionWindow
 from person_vehicle_interactions.interaction_signals import PairFrameSignal
-
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import PathLike
 
 # Distances above this many vehicle-diagonals aren't interesting for tuning; cap the axis
 # so the near-contact region stays readable (spikes clip off-axis).

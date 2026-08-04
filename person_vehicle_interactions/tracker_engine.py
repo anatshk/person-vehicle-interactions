@@ -17,9 +17,11 @@ from person_vehicle_interactions.clip_assembly import (
 )
 from person_vehicle_interactions.config import DetectionConfig, RAW_DIR, TRACKS_DIR
 from person_vehicle_interactions.raw_detections import tracks_from_raw, write_raw_frame
-from person_vehicle_interactions.tracked_data_model import save_metadata, save_tracks
-
-PathLike = Path | str
+from person_vehicle_interactions.tracked_data_model import (
+    PathLike,
+    save_metadata,
+    save_tracks,
+)
 
 
 def set_seeds(seed: int) -> None:
