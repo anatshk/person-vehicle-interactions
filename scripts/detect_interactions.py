@@ -14,6 +14,10 @@ artifacts stay together.
 The full/detect stages run YOLO11-l + BoT-SORT (needs the model); classify-tracks is
 model-free and offline. Interactions are decided with ``config.SHIPPED_THRESHOLDS``; a bad
 input in a batch is reported and skipped so the rest still run.
+
+The ``run`` stage describes each interaction's person + vehicle with ``--fast`` (YOLO-World
+open-vocab, the default), ``--detailed`` (moondream2 VLM, slower/richer), or ``--placeholder``
+(model-free). A backend that fails to load falls back to placeholders with a warning.
 """
 
 from __future__ import annotations
@@ -32,7 +36,8 @@ from person_vehicle_interactions.config import (
     SHIPPED_THRESHOLDS,
     target_class_ids_for_clip,
 )
-from scripts.build_results import build_clip_results
+from person_vehicle_interactions.describers import Describer
+from scripts.build_results import build_clip_results, make_describe_box
 
 VIDEO_SUFFIX = ".mp4"
 TRACKS_SUFFIX = ".csv"
@@ -91,17 +96,45 @@ def process_video_full(
     results_dir: Path = RESULTS_DIR,
     force: bool = False,
     generated_at=None,
+    describer: Describer | None = None,
 ) -> Path:
-    """Full pipeline for one video: detect + track, then classify. Returns the results JSON."""
+    """
+    Full pipeline for one video: detect + track, then classify. Returns the results JSON.
+    ``describer`` (when given) captions each interaction's person + vehicle from the video
+    pixels; otherwise the model-free placeholder descriptions are used.
+    """
     clip_dir = Path(results_dir) / video_path.stem
     _detect_and_track(video_path, clip_dir, force)
+    describe_box = (
+        make_describe_box(video_path, describer) if describer is not None else None
+    )
     return build_clip_results(
         video_path.stem,
         SHIPPED_THRESHOLDS,
         tracks_dir=clip_dir,
         results_dir=clip_dir,
         generated_at=generated_at,
+        describe_box=describe_box,
     )
+
+
+def build_describer(backend: str) -> Describer | None:
+    """
+    Load the descriptions backend once and return its describer (``None`` for placeholder).
+    ``fast`` = YOLO-World open-vocab (default), ``detailed`` = moondream2 VLM. Heavy imports
+    are lazy, so the placeholder path and ``--help`` need neither model.
+    """
+    if backend == "placeholder":
+        return None
+    if backend == "detailed":
+        from person_vehicle_interactions.captioner import load_captioner
+        from person_vehicle_interactions.describers import moondream_describer
+
+        return moondream_describer(load_captioner())
+    from person_vehicle_interactions.attribute_tagger import load_tagger
+    from person_vehicle_interactions.describers import yoloworld_describer
+
+    return yoloworld_describer(load_tagger())
 
 
 def process_video_detect(
@@ -183,11 +216,48 @@ def _build_parser() -> argparse.ArgumentParser:
         stage.add_argument(
             "--force", action="store_true", help="Re-detect even if tracks are cached."
         )
+    run.add_argument(
+        "--fast",
+        dest="backend",
+        action="store_const",
+        const="fast",
+        default="fast",
+        help="Fast YOLO-World open-vocab descriptions (default).",
+    )
+    run.add_argument(
+        "--detailed",
+        dest="backend",
+        action="store_const",
+        const="detailed",
+        help="Detailed moondream2 VLM descriptions (slow, higher quality).",
+    )
+    run.add_argument(
+        "--placeholder",
+        dest="backend",
+        action="store_const",
+        const="placeholder",
+        help="Model-free placeholder descriptions (no model download).",
+    )
     classify.add_argument(
         "path", type=Path, help="A tracks csv or a folder of cached tracks."
     )
     classify.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
     return parser
+
+
+def _describer_for(args: argparse.Namespace) -> Describer | None:
+    """
+    Build the chosen descriptions backend, falling back to placeholders if it can't load.
+    A missing model / dependency prints a warning and continues rather than aborting the run.
+    """
+    backend = getattr(args, "backend", "placeholder")
+    try:
+        return build_describer(backend)
+    except Exception as error:  # noqa: BLE001 - a missing model must not abort the run.
+        print(
+            f"warning: '{backend}' descriptions unavailable ({error}); using placeholders"
+        )
+        return None
 
 
 def _processor_for(args: argparse.Namespace) -> Callable[[Path], Path]:
@@ -199,7 +269,10 @@ def _processor_for(args: argparse.Namespace) -> Callable[[Path], Path]:
     if args.command == "classify-tracks":
         return functools.partial(process_tracks_classify, results_dir=args.results_dir)
     return functools.partial(
-        process_video_full, results_dir=args.results_dir, force=args.force
+        process_video_full,
+        results_dir=args.results_dir,
+        force=args.force,
+        describer=_describer_for(args),
     )
 
 
