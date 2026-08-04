@@ -1,0 +1,17 @@
+{
+  "clip_id": "mKzCQKTHizw_1",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "mKzCQKTHizw_1",
+      "person_id": 10,
+      "vehicle_id": 1,
+      "start_frame": 127,
+      "end_frame": 183,
+      "start_seconds": 4.237566666666667,
+      "end_seconds": 6.1061000000000005,
+      "person": "Female, wearing light blue and khaki, walking on a gray surface.",
+      "vehicle": "Silver four-door sedan"
+    }
+  ]
+}

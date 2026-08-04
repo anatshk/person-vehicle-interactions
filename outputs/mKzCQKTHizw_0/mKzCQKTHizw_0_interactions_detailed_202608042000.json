@@ -1,0 +1,28 @@
+{
+  "clip_id": "mKzCQKTHizw_0",
+  "generated_at": "2026-08-04T20:00:00",
+  "interactions": [
+    {
+      "clip_id": "mKzCQKTHizw_0",
+      "person_id": 51,
+      "vehicle_id": 49,
+      "start_frame": 262,
+      "end_frame": 287,
+      "start_seconds": 8.742066666666666,
+      "end_seconds": 9.576233333333333,
+      "person": "Unidentifiable, wearing dark clothing, no discernible colors.",
+      "vehicle": "Silver sedan"
+    },
+    {
+      "clip_id": "mKzCQKTHizw_0",
+      "person_id": 45,
+      "vehicle_id": 49,
+      "start_frame": 271,
+      "end_frame": 289,
+      "start_seconds": 9.042366666666666,
+      "end_seconds": 9.642966666666666,
+      "person": "Female, wearing light-colored clothing, appears in motion.",
+      "vehicle": "Silver sedan"
+    }
+  ]
+}
