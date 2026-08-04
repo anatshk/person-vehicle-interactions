@@ -1,15 +1,15 @@
 """
 Render TP / FP / FN interaction contact sheets from the cached tracks + source clips.
 
-For each clip: fit thresholds (LOSO fold-fitted per clip by default, or one set fit on all
-clips with ``--fit-on-all``), detect candidate interaction windows, match them against the
+For each clip: fit thresholds (the shipped set fit on all clips by default, or per-clip LOSO
+fold thresholds with ``--loso``), detect candidate interaction windows, match them against the
 ground truth, and render one montage per window — the predicted (person, vehicle) boxes
 drawn across the span plus context frames, captioned with the deciding thresholds and the
 actual signal values, so each true/false positive and false negative can be eyeballed.
 
-    python -m scripts.show_interactions                 # all clips, LOSO fold thresholds
+    python -m scripts.show_interactions                 # all clips, shipped thresholds
     python -m scripts.show_interactions --clip gt1125_06
-    python -m scripts.show_interactions --fit-on-all    # one threshold set for all clips
+    python -m scripts.show_interactions --loso          # per-clip LOSO fold thresholds (research)
 
 cv2 / matplotlib are pulled in lazily via ``visualization`` (integration test skips them).
 """
@@ -295,7 +295,7 @@ def _threshold_caption(thresholds: Thresholds) -> str:
 
 
 def _thresholds_by_clip(fit_on_all: bool) -> dict[str, Thresholds]:
-    """Per-clip thresholds: LOSO fold-fitted by default, or one set fit on all clips."""
+    """Per-clip thresholds: one set fit on all clips (``fit_on_all``) or per-clip LOSO folds."""
     ground_truth_by_clip = load_gt_windows(GT_CSV)
     boxes_by_clip = load_boxes_by_clip(all_clips(), TRACKS_DIR)
     fit = make_fit_thresholds(boxes_by_clip, ground_truth_by_clip, DEFAULT_GRID)
@@ -310,15 +310,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--clip", default=None, help="Render only this clip id.")
     parser.add_argument(
-        "--fit-on-all",
+        "--loso",
         action="store_true",
-        help="Use one threshold set fit on all clips (shippable view) instead of LOSO.",
+        help="Use per-clip LOSO fold thresholds (research) instead of the shipped set.",
     )
     parser.add_argument("--gt-csv", type=Path, default=GT_CSV)
     args = parser.parse_args()
 
     ground_truth_by_clip = load_gt_windows(args.gt_csv)
-    thresholds_by_clip = _thresholds_by_clip(args.fit_on_all)
+    thresholds_by_clip = _thresholds_by_clip(fit_on_all=not args.loso)
     clip_ids = (args.clip,) if args.clip else all_clips()
     for clip_id in clip_ids:
         paths = render_clip_interactions(
