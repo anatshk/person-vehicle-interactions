@@ -1,7 +1,5 @@
 # Anat Shkolyar - Person-Vehicle Interaction Task
 
-(<TODO> make sure it is under 2 pages in total)
-
 This is a detailed write-up of the work process.
 
 NOTE: I worked on my personal laptop which is CPU-only. 
@@ -11,6 +9,7 @@ My focus was on an offline pipeline, not real-time, due to these limitations.
 ## Overall Development with Claude Code
 
 I made sure to define what I want to do, then I reviewed any suggestions made by Claude.
+
 **There was no "paste the task into Claude and just let it run free".**
 
 Lots of code files - I asked Claude to separate as much as possible to make it easy for me to review.
@@ -78,7 +77,7 @@ The parameters, per (person, vehicle) pair over time: **normalized overlap** (bo
 Next, I ran a LOSO (leave-one-scene-out) to find the thresholds per-fold. This showed the approach had merit.
 I fit a set of global thresholds on all clips together - these are the thresholds set in config ([`config.SHIPPED_THRESHOLDS`](person_vehicle_interactions/config.py)): `min_overlap=0.2`, `max_distance=0.0`, `min_duration_frames=10`, `min_confidence=0.3`, `max_gap_frames=15`.
 
-I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds.
+I also took a video of people exiting a car with my phone, downsampled it and used it as an external sanity test for the thresholds. There were no surprises there, but I won't show the images here as the people in the video did not consent to being filmed.
 
 The pipeline reports interaction **candidates** (the person↔vehicle contact window); classifying each as enter / exit / other was scoped out - the brief only asks to *list* interactions - though the GT annotates the type, so it is a natural next step.
 
@@ -90,7 +89,7 @@ Going over the interactions highlighted the broken tracking - same interaction w
 My idea was to use the Description section to help filtering FPs and unifying segmented interactions.
 My assumption was that same person + same vehicle, in a given time range = same interaction, despite tracking issues, and that if the descriptions are detailed enough they may indicate "person walking past a car" or "person getting into a car", or even just answer a yes/no question of "is there a person touching a car in this image".
 
-I tasked Claude to find suitable models for image descriptios. We started from YOLO-World, whose attributes proved unreliable - it does emit colors and gender guesses, but they are frequently wrong (it labelled a man in a green shirt as "a woman" and a red sedan as "a red SUV"); it is more dependable on object *type* (sedan/SUV/truck). I asked to switch to a captioner model, Claude suggested `moondream2` from HuggingFace, which showed promise (it described that same clip as "Male, wearing green" and "Red four-door sedan" - matching the GT), but was very slow on CPU - more than a minute per image (per crop; descriptions are deduplicated per track, so each unique person/vehicle is described once, not once per interaction).
+I tasked Claude to find suitable models for image descriptions. We started from YOLO-World, whose attributes proved unreliable - it does emit colors and gender guesses, but they are frequently wrong (it labelled a man in a green shirt as "a woman" and a red sedan as "a red SUV"); it is more dependable on object *type* (sedan/SUV/truck). I asked to switch to a captioner model, Claude suggested `moondream2` from HuggingFace, which showed promise (it described that same clip as "Male, wearing green" and "Red four-door sedan" - matching the GT), but was very slow on CPU - more than a minute per image (per crop; descriptions are deduplicated per track, so each unique person/vehicle is described once, not once per interaction).
 
 For this task, I created 2 options for descriptions - one `--fast` using YOLO-World, just for the feeling of sane runtime and `--detailed` where `moondream2` was used, for usable descriptions.
 
