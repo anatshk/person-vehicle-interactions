@@ -26,7 +26,9 @@ the start of a function body.
 
 - **This is a take-home, not production.** Keep scope reasonable and favor a clear, working
   pipeline over completeness. Readability beats cleverness at this size.
-- **The handover file here is `CURRENT_STATUS.md`**, not `NEXT_STEPS.md`.
+- **The handover file here is `CURRENT_STATUS.md`**, not `NEXT_STEPS.md`. It is deliberately
+  **untracked** (gitignored) — it is session working state, not part of the deliverable, so
+  don't expect to find it in a fresh clone.
 - **`docs/WORKLOG.md` feeds the final write-up**, so decisions recorded there need to be
   reusable prose, not just notes to self. When an ambiguity is resolved, document the
   decision *and the alternatives considered* in the write-up.
