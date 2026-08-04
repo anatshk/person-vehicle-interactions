@@ -76,15 +76,19 @@ def write_clip_records(
     clip_id: str,
     results_dir: PathLike = RESULTS_DIR,
     generated_at: datetime.datetime | None = None,
+    method: str = "placeholder",
 ) -> Path:
     """
-    Write one clip's records to ``<results_dir>/<clip_id>_interactions_<YYYYMMDDHHMM>.json``.
-    ``generated_at`` defaults to now; pass an explicit value for deterministic output.
-    Returns the path written.
+    Write one clip's records to
+    ``<results_dir>/<clip_id>_interactions_<method>_<YYYYMMDDHHMM>.json``.
+
+    ``method`` is the description backend used (``fast`` / ``detailed`` / ``placeholder``), so
+    outputs from different backends don't collide. ``generated_at`` defaults to now; pass an
+    explicit value for deterministic output. Returns the path written.
     """
     generated_at = generated_at or datetime.datetime.now()
-    out_path = (
-        Path(results_dir) / f"{clip_id}_interactions_{generated_at:%Y%m%d%H%M}.json"
+    out_path = Path(results_dir) / (
+        f"{clip_id}_interactions_{method}_{generated_at:%Y%m%d%H%M}.json"
     )
     payload = {
         "clip_id": clip_id,
