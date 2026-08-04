@@ -13,14 +13,8 @@ limitations, and next steps.
 
 ## Code style
 
-Google Python Style Guide, with Black (88), isort (`profile = "google"`,
-`force_single_line = false`) and mypy configured in `pyproject.toml`. Type hints on every
-signature, Google-style docstrings, pytest test-first for core logic.
-
-Two conventions no formatter enforces: **multi-line docstrings start on the line after the
-opening `"""`** (summary second line, not first), and **no gratuitous blank lines** — none
-between a docstring summary and its body unless the docstring is long or structured, none at
-the start of a function body.
+The global conventions apply unchanged; Black, isort, pytest and mypy are configured in
+`pyproject.toml`. See the deviations below for what's specific to this repo.
 
 ## Deviations from my global conventions
 
@@ -34,7 +28,8 @@ the start of a function body.
   decision *and the alternatives considered* in the write-up.
 - **mypy is part of the check loop** (`.venv/bin/mypy person_vehicle_interactions`), not just
   Black and isort.
-- PR comment replies are tagged `[Claude-Opus-4.8]`.
+- PR comment replies are tagged `[Claude-<model>]` with the model actually replying — don't
+  copy a version from an older comment in the thread.
 - Stacked-PR caution is not theoretical here: #14 was marked merged by GitHub but its commits
   were silently dropped from `main` when its squash-merged base branch was deleted, and it had
   to be re-landed. Land base PRs first; keep stacks shallow.

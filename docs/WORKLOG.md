@@ -18,6 +18,59 @@ Entry template:
 
 ---
 
+## 2026-08-04 — Session 15: deliverable docs finalized
+
+**Narrative:** Closed out the written deliverables (PRs #52–#60). Aligned README and write-up
+with what is actually committed under `outputs/`, fixed the README Deliverables nesting, and
+**split the write-up into a ≤2-page `WRITE_UP.md` executive summary plus a full
+`docs/DETAILED_WRITE_UP.md`** — the assignment caps the write-up at two pages, and the
+material worth keeping (limitation images, GT totals, alternatives considered, the external
+clip) did not fit. Surfaced decisions and findings from `docs/PLAN.md` and this log into the
+write-up, so the reasoning is in the deliverable rather than only in the working notes.
+Slimmed `CLAUDE.md` to project-specific guidance and marked `CURRENT_STATUS.md` as untracked
+working state, not part of the deliverable.
+
+**Decisions:** Write-up **split rather than trimmed** — PR #54 (trim toward the page limit)
+was closed in favour of the two-document split. `CURRENT_STATUS.md` is **session state, not a
+deliverable**: gitignored, so a fresh clone won't have it.
+
+**Next:** make the repo public — the last unchecked box in `docs/TODO.md`.
+
+## 2026-08-04 — Session 14: real descriptions from cached tracks
+
+**Narrative:** Closed the session-13 gap — `classify-tracks` was model-free (placeholder
+captions only), so only the full `run` could produce real descriptions. It now takes
+`--fast`(default)/`--detailed`/`--placeholder` and resolves the sibling video (`--video`, else
+`<videos-dir>/<clip>.mp4`) to cut crops, reusing `_describer_for` and `make_describe_box`
+(PR #51). A missing video degrades to a placeholder with a warning instead of crashing. TDD:
+4 new tests, full suite 162 passing. **Verified end-to-end on the shortest clip
+(`NmlzoaDcOuI_6`), both run modes × both backends, all real captions** — cached
+`classify-tracks --fast` 9s and `--detailed` 7m52s, matching the full `run --fast` (3m) and
+`run --detailed` (~10m) exactly, confirming `classify-tracks` does not silently re-detect.
+
+**Decisions:** Both entry points must emit real descriptions for both backends — a cached
+path that can only produce placeholders is not a usable second run mode.
+
+**Next:** deliverable docs pass (→ Session 15).
+
+## 2026-08-04 — Session 13: `--detailed` outputs + repo root cleanup
+
+**Narrative:** Generated and committed the `--detailed` (moondream) results for all 8 clips —
+15 interactions — alongside the `--fast` results already on `main` (PR #50), under the
+filename convention
+`outputs/<clip>/<clip>_interactions_<fast|detailed|placeholder>_<ts>.json`. Landed the
+descriptions wiring itself (#46), the committed tracks/sheets/timing findings (#43), the
+`show_interactions` fit-on-all default (#44), and the README/write-up fills (#42, #45, #47,
+#48). Tidied the repo root (#49): planning docs moved under `docs/`, the assignment PDF to
+`docs/reference/`. Pinned `clip` (git SHA) and `ftfy==6.3.1`.
+
+**Decisions:** Ship **both** backends' outputs rather than picking one, with the method in the
+filename so a reader can tell which produced a given result. Identified the gap that
+`classify-tracks` could not produce real descriptions from cached tracks — carried into
+Session 14.
+
+**Next:** wire real descriptions into `classify-tracks` and verify both run modes end-to-end.
+
 ## 2026-07-31 — Session 12: descriptions backend chosen + external clip run
 
 **Narrative:** Selected the description backend by benchmarking on real crops. Built isolated,
