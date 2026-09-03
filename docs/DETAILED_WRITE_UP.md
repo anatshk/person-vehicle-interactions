@@ -144,6 +144,23 @@ CCTV detection-recall miss, not a broken run). The precision/recall/F1 above is 
 leakage-free LOSO **evaluation** device and is not what produces these shipped outputs - so its
 window counts (16 predictions vs 13 GT) are not expected to match the 15 committed interactions.
 
+## Last Minute Checks
+
+As a last-minute check while reviewing before the interview, I noticed the shipped thresholds
+sit at the edge of the parameter search grid on every axis, so I widened the grid a little to
+see whether a better parameter set exists. It turns out there was one:
+
+| | F1 | Precision | Recall | TP / FP / FN | thresholds |
+|---|---|---|---|---|---|
+| Shipped | 0.71 | 0.67 | 0.77 | 10 / 5 / 3 | overlap 0.2, dist 0.0, dur 10, conf 0.3, gap 15 |
+| Best of widened grid | 0.85 | 0.85 | 0.85 | 11 / 2 / 2 | overlap 0.4, dist 0.0, dur 3, conf 0.5, gap 15 |
+
+(Both fit and scored on all clips, the same protocol that produced `config.SHIPPED_THRESHOLDS`;
+this is an in-sample fitting comparison, not a leakage-free LOSO number. See
+`scripts/widen_grid_experiment.py`.) The new optimum lands in the interior of the widened
+ranges rather than back on an edge, so the widening was enough to capture it. The reported
+results elsewhere in this write-up are still for the previously shipped thresholds.
+
 # Future Improvements
 
 1. Detection / tracking
