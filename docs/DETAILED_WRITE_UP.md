@@ -147,16 +147,16 @@ window counts (16 predictions vs 13 GT) are not expected to match the 15 committ
 # Future Improvements
 
 1. Detection / tracking
-    a. Detection model trained on CCTV and other suitable footage
-    b. Better tracking module
-    c. A video-native model that detects + tracks jointly (e.g. transformer trackers such as MOTR / TrackFormer, or open-vocabulary video models) instead of per-frame detection + a separate tracker.
+    1. Detection model trained on CCTV and other suitable footage
+    2. Better tracking module
+    3. A video-native model that detects + tracks jointly (e.g. transformer trackers such as MOTR / TrackFormer, or open-vocabulary video models) instead of per-frame detection + a separate tracker.
 2. Definition of Interaction 
-    a. Is a person removing a car cover considered an interaction? 
-    b. Tuning / replacing selected interaction parameters based on more data
-    c. Address more edge cases - multiple people interacting simultaneously with a vehicle - is it one or multiple interactions?
+    1. Is a person removing a car cover considered an interaction? 
+    2. Tuning / replacing selected interaction parameters based on more data
+    3. Address more edge cases - multiple people interacting simultaneously with a vehicle - is it one or multiple interactions?
 3. Descriptions
-    a. Using GPU for faster image descriptions
-    b. Using descriptions to filter out FPs
+    1. Using GPU for faster image descriptions
+    2. Using descriptions to filter out FPs
 4. A completely other direction - train a model that identifies interactions within videos - requires large amounts of labeled data.
 
 
