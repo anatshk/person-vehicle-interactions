@@ -78,12 +78,6 @@ class DetectionConfig:
 # (not per LOSO fold), so a run is reproducible and applies to clips without ground truth.
 # LOSO is a research-only concern; the deliverable never sees it. Kept in sync with
 # ``fit(all_clips())`` by ``test_shipped_thresholds_match_fit_on_all``.
-# TODO: change the shipped thresholds to the better values found by the widened grid search
-#   (min_overlap=0.4, max_distance=0.0, min_duration_frames=3, min_confidence=0.5,
-#   max_gap_frames=15), which beat these on the fit-on-all score (F1 0.85 vs 0.71). This must
-#   be done together with widening DEFAULT_GRID to include those values, or
-#   test_shipped_thresholds_match_fit_on_all will fail. See scripts/widen_grid_experiment.py
-#   and the "Last Minute Checks" section of docs/DETAILED_WRITE_UP.md.
 SHIPPED_THRESHOLDS = Thresholds(
     min_overlap=0.2,
     max_distance=0.0,
