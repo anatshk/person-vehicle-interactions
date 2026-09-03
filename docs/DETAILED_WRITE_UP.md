@@ -161,6 +161,24 @@ this is an in-sample fitting comparison, not a leakage-free LOSO number. See
 ranges rather than back on an edge, so the widening was enough to capture it. The reported
 results elsewhere in this write-up are still for the previously shipped thresholds.
 
+### Check wide grid with LOSO
+
+The in-sample gain looked large, so I re-ran the leakage-free LOSO with the widened grid to
+see whether it survives out of sample. It does not:
+
+| Grid | F1 | Precision | Recall | TP / FP / FN |
+|---|---|---|---|---|
+| Original (288 points) | 0.69 | 0.62 | 0.77 | 10 / 6 / 3 |
+| Widened (4320 points) | 0.71 | 0.67 | 0.77 | 10 / 5 / 3 |
+
+The widening buys almost nothing (one fewer false positive); the gain in the full-dataset fit
+was overfitting. Widening the grid also destroys the fold stability that was a selling point -
+with the original grid, 5/6 folds fit identical thresholds, whereas in the widened grid the
+folds scatter badly and no longer agree on what "an interaction" is, indicating overfit. And it
+just reshuffles which scenes win - `cctv_night`, `aerial_4k` and `grayscale_cctv` improve, but
+`indoor_ceiling` collapses (F1 0.67 to 0.00) and `ptz` drops (0.80 to 0.57). So the edge
+position of the shipped thresholds is not worth chasing, and I kept them unchanged.
+
 # Future Improvements
 
 1. Detection / tracking
